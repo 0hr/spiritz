@@ -1,5 +1,5 @@
 import express from 'express';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 import path from 'path';
 import logger from 'morgan';
 import cookieParser from "cookie-parser";
@@ -7,7 +7,7 @@ import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
 import tiktokRouter from "./routes/tiktok.js";
 import admin from 'firebase-admin';
-import * as serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
+import * as serviceAccount from "./serviceAccountKey.json" assert {type: "json"};
 import 'dotenv/config'
 import IsAuthenticated from "./middleware/IsAuthenticated.js";
 import ticketRouter from "./routes/tickets.js";
@@ -48,7 +48,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/tickets', ticketRouter);
 app.use('/tiktok', IsAuthenticated, tiktokRouter);
-app.use('/identifiers', identifierRouter);
+app.use('/identifiers', IsAuthenticated, identifierRouter);
 
 
 export default app;
