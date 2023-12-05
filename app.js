@@ -48,7 +48,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/tickets', ticketRouter);
 app.use('/tiktok', IsAuthenticated, tiktokRouter);
-app.use('/identifiers', IsAuthenticated, identifierRouter);
+app.use('/identifiers', identifierRouter);
 
 
 export default app;

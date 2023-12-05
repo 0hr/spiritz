@@ -7,10 +7,11 @@ import BaseResponse from "../responses/BaseResponse.js";
 import path from "path";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
 import {check} from "express-validator";
+import IsAuthenticated from "../middleware/IsAuthenticated.js";
 
 const identifierRouter = express.Router();
 
-identifierRouter.get('/list', async (req, res) => {
+identifierRouter.get('/list',async (req, res) => {
     const response = new IdentifierResponse();
     try {
         const identifierService = new IdentifierService();
@@ -59,7 +60,7 @@ const errorHandle = (err, req, res, next) => {
     next()
 };
 
-identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],async (req, res) => {
+identifierRouter.post('/identify', [IsAuthenticated, uploadImage.single('image'), errorHandle],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         const id = req.body.id;
