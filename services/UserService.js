@@ -9,7 +9,6 @@ export default class UserService {
             emailVerified: false,
             disabled: false,
         };
-        admin.auth().conf
         return await admin.auth().createUser(user);
     }
 
