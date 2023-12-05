@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "plant-b23ab",
+    "dev": "plant-b23ab"
+  },
+  "targets": {},
+  "etags": {}
+}
