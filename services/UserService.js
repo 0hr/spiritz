@@ -21,6 +21,6 @@ export default class UserService {
     }
 
     async createToken(idToken) {
-        return await admin.auth().verifyIdToken(idToken)
+        return await admin.auth().createCustomToken(idToken)
     }
 }
