@@ -43,7 +43,7 @@ export default class IdentifierService {
                     role: 'user',
                     content: [
                         {type: 'text', 'text': identifier.prompt},
-                        {type: 'text', 'text': `The answer should be in the ${lang} language.`},
+                        {type: 'text', 'text': `The answer should be given in the language indicated by the language code '${lang}'`},
                         {
                             type: 'image_url',
                             image_url: {
