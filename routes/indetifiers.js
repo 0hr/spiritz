@@ -6,8 +6,7 @@ import imageType from "image-type";
 import BaseResponse from "../responses/BaseResponse.js";
 import path from "path";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
-import {check} from "express-validator";
-import IsAuthenticated from "../middleware/IsAuthenticated.js";
+import {check, validationResult} from "express-validator";
 
 const identifierRouter = express.Router();
 
@@ -36,7 +35,6 @@ const uploadImage = multer({
         if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
             return cb(null, true);
         } else {
-
             cb(new Error("Invalid file"), true);
         }
     },
@@ -44,7 +42,10 @@ const uploadImage = multer({
 
 const validations = [
     check('id')
-        .exists().withMessage('Id is required')
+        .exists().withMessage('Id is required'),
+    check('lang')
+        .exists().withMessage('Language is required'),
+    uploadImage.single('image'),
 ];
 
 const errorHandle = (err, req, res, next) => {
@@ -60,14 +61,20 @@ const errorHandle = (err, req, res, next) => {
     next()
 };
 
-identifierRouter.post('/identify', [IsAuthenticated, uploadImage.single('image'), errorHandle],async (req, res) => {
+identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (!req.body.id) {
+            baseResponse.status.code = 500;
+            baseResponse.status.message = 'Id is required';
+            return res.json(baseResponse);
+        }
         const id = req.body.id;
+        const lang = req.body.lang || "english";
         const identifierService = new IdentifierService();
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
-        response.result = await identifierService.identify(id, imageBase64);
+        response.result = await identifierService.identify(id, imageBase64, lang);
     } catch (err) {
         res.status(500);
         response.status.message = err.message;

@@ -8,6 +8,11 @@ const ticketRouter = express.Router();
 const validations = [
     check('name')
         .exists().withMessage('Name is required'),
+    check('user_id')
+        .exists().withMessage('User Id is required'),
+    check('tags')
+        .exists().withMessage('Tags is required')
+        .isArray().withMessage('Tags should be array'),
     check('email')
         .exists().withMessage('Email is required')
         .isEmail().withMessage('Email is not valid'),
@@ -33,8 +38,10 @@ ticketRouter.post('/create', validations, async (req, res) => {
         const email = req.body.email;
         const message = req.body.message;
         const subject = req.body.subject;
+        const tags = req.body.tags;
+        const userId = req.body.user_id;
         const ticketService = new TicketService();
-        const ticket = await ticketService.createTicket(name, email, subject, message);
+        const ticket = await ticketService.createTicket(name, email, subject, message, userId, tags);
 
         if (!ticket.hasOwnProperty('ticket')) {
             throw new Error('Ticket is not created');
@@ -44,7 +51,7 @@ ticketRouter.post('/create', validations, async (req, res) => {
         response.subject = ticket.ticket.id;
         response.ticket_status = ticket.ticket.status;
         res.json(response);
-    }catch (err) {
+    } catch (err) {
         res.status(500);
         response.status.message = err.message;
         response.status.code = 500;

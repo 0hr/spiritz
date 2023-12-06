@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import OpenAI from 'openai';
 import {OPENAI_API_KEY} from "../consts.js";
+import indetifiers from "../routes/indetifiers.js";
 
 export default class IdentifierService {
     async getIdentifiers() {
@@ -23,7 +24,7 @@ export default class IdentifierService {
     }
 
 
-    async identify(id, image) {
+    async identify(id, image, lang) {
         const db = admin.firestore();
         const collection = db.collection('identifications');
         const result = await collection.doc(id).get()
@@ -31,7 +32,6 @@ export default class IdentifierService {
             throw new Error("Collection is empty");
         }
         const identifier = result.data();
-
         const openai = new OpenAI({
             apiKey: OPENAI_API_KEY,
         });
@@ -43,22 +43,17 @@ export default class IdentifierService {
                     role: 'user',
                     content: [
                         {type: 'text', 'text': identifier.prompt},
+                        {type: 'text', 'text': `The answer should be in the ${lang} language.`},
                         {
                             type: 'image_url',
                             image_url: {
-                                url: image,
+                                url: image
                             }
-                        }
+                        },
                     ]
                 }
             ]
         });
-
-        const message =  completion.choices[0]?.message?.content;
-
-        const regExp = /\((.*)\)/;
-        const match = message.match(regExp);
-
-        return match.length > 0 ? match[1] : "Object is not found";
+        return completion.choices[0]?.message?.content;
     }
 }

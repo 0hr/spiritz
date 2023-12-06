@@ -9,7 +9,6 @@ import tiktokRouter from "./routes/tiktok.js";
 import admin from 'firebase-admin';
 import * as serviceAccount from "./serviceAccountKey.json" assert {type: "json"};
 import 'dotenv/config'
-import IsAuthenticated from "./middleware/IsAuthenticated.js";
 import ticketRouter from "./routes/tickets.js";
 import rateLimit from "express-rate-limit";
 import identifierRouter from "./routes/indetifiers.js";
@@ -45,9 +44,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(path.dirname(__dirname), 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/tickets', ticketRouter);
-app.use('/tiktok', IsAuthenticated, tiktokRouter);
+app.use('/tiktok', tiktokRouter);
 app.use('/identifiers', identifierRouter);
 
 
