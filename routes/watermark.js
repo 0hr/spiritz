@@ -47,8 +47,8 @@ watermarkRouter.post('/remove', [uploadImage.single('image'), errorHandle], asyn
         const fileExtension = path.extname(file.originalname).toLowerCase();
 
         const filepath = imageHash.substring(0, 2) + '/' + imageHash.substring(2, 4);
-        const filenameNoWm = filepath + imageHash.substring(4) + '_r' + fileExtension;
-        const filename = filepath  + imageHash.substring(4) + fileExtension;
+        const filenameNoWm = filepath + '/' + imageHash.substring(4) + '_r' + fileExtension;
+        const filename = filepath + '/' + imageHash.substring(4) + fileExtension;
 
         let url;
         if (await watermarkService.checkFile(filenameNoWm)) {
