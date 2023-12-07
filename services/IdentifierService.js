@@ -4,6 +4,14 @@ import {OPENAI_API_KEY} from "../consts.js";
 import indetifiers from "../routes/indetifiers.js";
 
 export default class IdentifierService {
+
+    constructor() {
+        this.openai = new OpenAI({
+            apiKey: OPENAI_API_KEY,
+        });
+    }
+
+
     async getIdentifiers() {
         const db = admin.firestore();
         const collection = db.collection('identifications');
@@ -32,11 +40,8 @@ export default class IdentifierService {
             throw new Error("Collection is empty");
         }
         const identifier = result.data();
-        const openai = new OpenAI({
-            apiKey: OPENAI_API_KEY,
-        });
 
-        const completion = await openai.chat.completions.create({
+        const completion = await this.openai.chat.completions.create({
             model: 'gpt-4-vision-preview',
             messages: [
                 {

@@ -1,5 +1,5 @@
-import Message from "./Message.js";
+import MessageResponse from "./MessageResponse.js";
 
 export default class BaseResponse {
-    status = new Message();
+    status = new MessageResponse();
 }

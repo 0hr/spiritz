@@ -12,7 +12,7 @@ import 'dotenv/config'
 import ticketRouter from "./routes/tickets.js";
 import rateLimit from "express-rate-limit";
 import identifierRouter from "./routes/indetifiers.js";
-import BaseResponse from "./responses/BaseResponse.js";
+import watermarkRouter from "./routes/watermark.js";
 
 const app = express();
 
@@ -47,6 +47,7 @@ app.use('/', indexRouter);
 app.use('/tickets', ticketRouter);
 app.use('/tiktok', tiktokRouter);
 app.use('/identifiers', identifierRouter);
+app.use('/watermark', watermarkRouter);
 
 
 export default app;
