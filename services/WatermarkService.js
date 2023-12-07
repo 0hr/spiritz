@@ -26,12 +26,12 @@ export default class WatermarkService {
         }
     }
 
-    async uploadFile(filename, file) {
+    async uploadFile(filename, file, contentType) {
         const params = {
             Bucket: AWS_S3_BUCKETNAME,
             Key: filename,
             Body: file.buffer,
-            ContentType: file.mimetype,
+            ContentType: contentType,
         };
         const uploadCommand = new PutObjectCommand(params);
         await this.s3Client.send(uploadCommand);
@@ -39,25 +39,22 @@ export default class WatermarkService {
         return filename;
     }
 
-    async removeWatermark(filename, filenameNoWm) {
+
+    getPixelbinUrl(filename, transformations) {
         const obj = {
             cloudName: PIXELBIN_API_CLOUD_NAME,
             zone: PIXELBIN_ZONE,
             version: "v2",
-            transformations: [{"name": "remove", "plugin": "wm"}],
+            transformations: [transformations],
             filePath: filename,
         };
 
 
-        const cdnUrl = url.objToUrl(obj);
+        return url.objToUrl(obj);
 
-        const response = await axios.get(cdnUrl, {responseType: 'arraybuffer'});
-        await this.uploadFile(filenameNoWm, response.data)
-
-        return await this.getUrl(filenameNoWm);
     }
 
-    async getUrl(filename) {
+    async getS3Url(filename) {
         const params = {
             Bucket: AWS_S3_BUCKETNAME,
             Key: filename,
