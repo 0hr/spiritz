@@ -71,6 +71,12 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
             }
             res.setHeader('Content-Type', imageResponse.headers['content-type']);
 
+            const cacheTimeInSeconds = 3600;
+            res.set({
+                'Cache-Control': `public, max-age=${cacheTimeInSeconds}`,
+                'Expires': new Date(Date.now() + cacheTimeInSeconds * 1000).toUTCString(),
+            });
+
             return res.send(imageResponse.data);
         }
 
