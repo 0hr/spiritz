@@ -53,6 +53,7 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
         watermarkResponse.status.code = '404';
         return res.json(watermarkResponse);
     }
+
     if (await watermarkService.checkFile(filenameNoWm)) {
         url = await watermarkService.getS3Url(filenameNoWm);
     } else {
@@ -72,12 +73,22 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
 
             return res.send(imageResponse.data);
         }
+
         res.status(400);
-        if (contentType === 'application/json' || contentType === 'text/plain') {
-            watermarkResponse.status.message = new TextDecoder('utf-8').decode(imageResponse.data);
+        watermarkResponse.status.message = 'Content is not ready';
+        const imageResponseResult = new TextDecoder('utf-8').decode(imageResponse.data);
+        if (contentType === 'application/json') {
+            try {
+                watermarkResponse.status.errors = JSON.parse(imageResponseResult);
+            } catch (err) {
+                watermarkResponse.status.errors = err.message;
+            }
+        } else if (contentType === 'text/plain') {
+            watermarkResponse.status.errors = [imageResponseResult];
         } else {
-            watermarkResponse.status.message = 'Unknown error';
+            watermarkResponse.status.errors = ['Unknown Error'];
         }
+
     } catch (err) {
         watermarkResponse.status.message = err.message;
         res.status(500);
