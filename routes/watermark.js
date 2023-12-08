@@ -92,7 +92,7 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
         } else if (contentType === 'text/plain') {
             watermarkResponse.status.errors = [imageResponseResult];
         } else {
-            watermarkResponse.status.errors = ['Unknown Error'];
+            watermarkResponse.status.errors = [`Unknown Error ${contentType}`];
         }
 
     } catch (err) {
