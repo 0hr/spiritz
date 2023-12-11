@@ -34,7 +34,7 @@ tiktokRouter.post('/get', validations, async (req, res, next) => {
         response.video_url = result.url;
         response.nickname = result.nickname;
         response.video_description = result.description;
-        response.url = url;
+        response.url = result.redirectedUrl;
         response.id = result.id;
     } catch (err) {
         res.status(500);

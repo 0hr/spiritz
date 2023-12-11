@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export default class TiktokService {
     getHeaders() {
         const headers = new Headers();
@@ -15,9 +17,15 @@ export default class TiktokService {
         return (idVideo.length > 19) ? idVideo.substring(0, idVideo.indexOf("?")) : idVideo;
     }
 
+    async getRealUrl(url) {
+        const response = await axios.get(url);
+        return response.request.res.responseUrl;
+    }
+
     async getUrl(url) {
         const headers = this.getHeaders();
-        const idVideo = this.getIdFromUrl(url);
+        const redirectedUrl = await this.getRealUrl(url);
+        const idVideo = this.getIdFromUrl(redirectedUrl);
         const API_URL = `https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id=${idVideo}`;
         const request = await fetch(API_URL, {
             method: "GET",
@@ -29,6 +37,7 @@ export default class TiktokService {
         const nickname =  res.aweme_list[0].author.nickname;
         const videoUrl = res.aweme_list[0].video.play_addr.url_list[0]
         return {
+            redirectedUrl: redirectedUrl,
             url: videoUrl,
             nickname: nickname,
             description: description,
