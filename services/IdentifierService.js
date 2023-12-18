@@ -49,7 +49,6 @@ export default class IdentifierService {
                     role: 'user',
                     content: [
                         {type: 'text', text: identifier.prompt},
-                        {type: 'text', text: 'The answer should be common name, should not be scientific name'},
                         {type: 'text', text: `if given is not found in the image, add 0 as status, otherwise 1. Make result as a json without markdown. The Answer is in answer field. The Status is in status field.`},
                         {type: 'text', text: `The answer should be given in the language indicated by the language code ${lang}.`},
                         {
