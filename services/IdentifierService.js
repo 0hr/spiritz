@@ -36,23 +36,25 @@ export default class IdentifierService {
         const db = admin.firestore();
         const collection = db.collection('identifications');
         const result = await collection.doc(id).get()
-        if (result.empty) {
+        if (!result.exists) {
             throw new Error("Collection is empty");
         }
         const identifier = result.data();
 
         const completion = await this.openai.chat.completions.create({
             model: 'gpt-4-vision-preview',
+            max_tokens: 255,
             messages: [
                 {
                     role: 'user',
                     content: [
-                        {type: 'text', 'text': identifier.prompt},
-                        {type: 'text', 'text': `The answer should be given in the language indicated by the language code '${lang}'`},
+                        {type: 'text', text: identifier.prompt},
+                        {type: 'text', text: `if given is not found in the image, add 0 as status, otherwise 1. Make result as a json without markdown. The Answer is in answer field. The Status is in status field.`},
+                        {type: 'text', text: `The answer should be given in the language indicated by the language code ${lang}.`},
                         {
                             type: 'image_url',
                             image_url: {
-                                url: image
+                                url: image,
                             }
                         },
                     ]

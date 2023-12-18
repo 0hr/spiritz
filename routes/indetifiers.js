@@ -74,7 +74,13 @@ identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],as
         const identifierService = new IdentifierService();
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
-        response.result = await identifierService.identify(id, imageBase64, lang);
+        const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
+        if (result.status === 0) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.answer;
+        }
+        response.result = result.answer;
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
