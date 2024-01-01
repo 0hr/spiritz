@@ -49,7 +49,6 @@ const validations = [
 ];
 
 const errorHandle = (err, req, res, next) => {
-    console.log(err);
     if (err instanceof Error) {
         res.status(500);
         const baseResponse = new BaseResponse();
@@ -75,10 +74,13 @@ identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],as
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
         const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
+        if (!result.hasOwnProperty('status') || !result.hasOwnProperty('answer')) {
+            throw new Error("Bad Response!")
+        }
         if (result.status === 0) {
             res.status(400);
             response.status.code = 400;
-            response.status.message = result.answer;
+            response.status.message = result.answer[0];
         }
         response.result = result.answer;
     } catch (err) {

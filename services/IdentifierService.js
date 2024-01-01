@@ -48,9 +48,12 @@ export default class IdentifierService {
                 {
                     role: 'user',
                     content: [
+                        {type: 'text', text: "Execute the following instructions. Only perform the specified actions and refrain from any additional actions."},
                         {type: 'text', text: identifier.prompt},
-                        {type: 'text', text: `if given is not found in the image, add 0 as status, otherwise 1. Make result as a json without markdown. The Answer is in answer field. The Status is in status field.`},
-                        {type: 'text', text: `The answer should be given in the language indicated by the language code ${lang}.`},
+                        {type: 'text', text: "If the given item is not found in the image, assign the status as 0; otherwise, assign it as 1. Present the results as a JSON format without markdown."},
+                        {type: 'text', text: "Use the 'status' field for the assigned status.  Place the answer in the 'answer' field as array. If multiple items are identified, include them in the 'answer' field as an array. " +
+                                "If no items are identified, add the answer is in answer field as an array.  Only Provide answer and status fields and provide only answers in 'answer' field as an array."},
+                        {type: 'text', text: `Provide the answer in the language indicated by the language code ${lang}, and refrain from translating JSON keys.`},
                         {
                             type: 'image_url',
                             image_url: {
