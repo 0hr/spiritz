@@ -26,15 +26,15 @@ const defaultApp = admin.initializeApp({
 });
 
 // Firebase configuration end.
-const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    limit: 100,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-})
-
-// Apply the rate limiting middleware to all requests.
-app.use(limiter)
+// export const limiter = rateLimit({
+//     windowMs: 10 * 60 * 1000, // 10 minutes
+//     limit: 100,
+//     standardHeaders: 'draft-7',
+//     legacyHeaders: false,
+// })
+//
+// // Apply the rate limiting middleware to all requests.
+// app.use(limiter)
 
 
 app.use(logger('dev'));
