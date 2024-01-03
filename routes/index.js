@@ -14,11 +14,11 @@ indexRouter.get('/', function(req, res, next) {
 });
 
 indexRouter.all('/terms', function (req, res, next) {
-    return res.sendFile(path.join(__dirname, 'public/terms-of-use'));
+    return res.sendFile(path.join(__dirname, 'public/terms-of-use.html'));
 });
 
 indexRouter.all('/privacy', function (req, res, next) {
-    return res.sendFile(path.join(__dirname, 'public/privacy-policy'));
+    return res.sendFile(path.join(__dirname, 'public/privacy-policy.html'));
 });
 
 indexRouter.get('/configs', async (req, res, next) => {
