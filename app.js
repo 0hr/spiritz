@@ -17,8 +17,7 @@ import watermarkRouter from "./routes/watermark.js";
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+export const __dirname = path.dirname(__filename);
 
 // Firebase configuration start.
 const defaultApp = admin.initializeApp({
@@ -37,11 +36,13 @@ const limiter = rateLimit({
 // Apply the rate limiting middleware to all requests.
 app.use(limiter)
 
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
-app.use(express.static(path.join(path.dirname(__dirname), 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.use('/', indexRouter);
 app.use('/tickets', ticketRouter);

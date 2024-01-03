@@ -1,13 +1,49 @@
-<html>
-
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Express</title>
-  <link rel="stylesheet" href="/stylesheets/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    'roboto': ['Roboto', 'sans-serif']
+                }
+            }
+        }
+    </script>
+    <title>Retouch - AI Powered Watermark Toolbox</title>
 </head>
-
-<body>
-  <h1>Express</h1>
-  <p>Welcome to Express</p>
+<body class="font-roboto">
+<div class="container mx-auto mt-10">
+    <header class="flex items-center gap-5">
+        <a href="/">
+            <img src="/assets/icon.png" alt="Retouch logo"/>
+        </a>
+        <div class="flex flex-col">
+            <h1 class="text-4xl">Retouch</h1>
+            <h2> AI Powered Watermark Toolbox</h2>
+        </div>
+    </header>
+    <main>
+        <div class="grid grid-cols-4 mt-5">
+            <img src="/assets/iphonemax_00.jpg" alt="Retouch screenshot"/>
+            <img src="/assets/iphonemax_01.jpg" alt="Retouch screenshot"/>
+            <img src="/assets/iphonemax_03.jpg" alt="Retouch screenshot"/>
+            <img src="/assets/iphonemax_05.jpg" alt="Retouch screenshot"/>
+        </div>
+    </main>
+    <footer class="flex items-center justify-between mt-10">
+        <img src="/assets/icon2.png" alt="Retouch footer logo"/>
+        <div class="flex flex-row gap-5">
+            <a href="privacy-policy.html" class="hover:underline">Privacy Policy</a>
+            <a href="terms-of-use.html" class="hover:underline">Terms of Use</a>
+        </div>
+    </footer>
+</div>
 </body>
-
 </html>

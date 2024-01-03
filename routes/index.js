@@ -1,17 +1,25 @@
 import express from 'express';
 import BaseResponse from "../responses/BaseResponse.js";
 import admin from "firebase-admin"
+import path from "path";
+import {__dirname} from "../app.js";
+import {fileURLToPath} from "url";
 
 const indexRouter = express.Router();
 
+
 /* GET home page. */
-indexRouter.all('/', function (req, res, next) {
-    const baseResponse = new BaseResponse();
-    baseResponse.status.code = 200;
-    baseResponse.status.message = 'Api is working';
-    res.json(baseResponse);
+indexRouter.get('/', function(req, res, next) {
+    return res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+indexRouter.all('/terms', function (req, res, next) {
+    return res.sendFile(path.join(__dirname, 'public/terms-of-use'));
+});
+
+indexRouter.all('/privacy', function (req, res, next) {
+    return res.sendFile(path.join(__dirname, 'public/privacy-policy'));
+});
 
 indexRouter.get('/configs', async (req, res, next) => {
     const versionNumber = req.query.version || false;
