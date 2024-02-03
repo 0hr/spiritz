@@ -34,7 +34,7 @@ export const HasSecurity = async (req, res, next) => {
     } catch (err) {
         res.status(500);
         baseResponse.status.code = 500;
-        baseResponse.status.message = AES.encrpyt(JSON.stringify({ time: new Date().getTime()})) + ' You are not authorized. Invalid session';
+        baseResponse.status.message = ' You are not authorized. Invalid session';
         return res.json(baseResponse);
     }
 
@@ -43,7 +43,7 @@ export const HasSecurity = async (req, res, next) => {
     if ((time - sessionData.time)  > 1000 * 60 * 2) {
         res.status(500);
         baseResponse.status.code = 500;
-        baseResponse.status.message = 'You are not authorized. Expired session -> ' + AES.encrpyt(JSON.stringify({ time: new Date().getTime()}));
+        baseResponse.status.message = 'You are not authorized. Expired session -> '
         return res.json(baseResponse);
     }
 
