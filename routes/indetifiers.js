@@ -1,16 +1,15 @@
 import express from 'express';
 import IdentifierResponse from "../responses/IdentifierResponse.js";
 import IdentifierService from "../services/IdentifierService.js";
-import multer from "multer";
 import imageType from "image-type";
-import BaseResponse from "../responses/BaseResponse.js";
-import path from "path";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
-import {check, validationResult} from "express-validator";
+import {UploadImage} from "../middlewares/UploadImage.js";
+import {ErrorHandle} from "../middlewares/HandleError.js";
+import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 const identifierRouter = express.Router();
 
-identifierRouter.get('/list',async (req, res) => {
+identifierRouter.get('/list', async (req, res) => {
     const response = new IdentifierResponse();
     try {
         const identifierService = new IdentifierService();
@@ -24,49 +23,13 @@ identifierRouter.get('/list',async (req, res) => {
     return res.json(response);
 });
 
-const storage = multer.memoryStorage();
-const uploadImage = multer({
-    storage: storage,
-    limits: {fileSize: 10 * 1024 * 1024},
-    fileFilter: async (req, file, cb) => {
-        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-        const fileExtension = path.extname(file.originalname).toLowerCase();
-        if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
-            return cb(null, true);
-        } else {
-            cb(new Error("Invalid file"), true);
-        }
-    },
-});
-
-const validations = [
-    check('id')
-        .exists().withMessage('Id is required'),
-    check('lang')
-        .exists().withMessage('Language is required'),
-    uploadImage.single('image'),
-];
-
-const errorHandle = (err, req, res, next) => {
-    if (err instanceof Error) {
-        res.status(500);
-        const baseResponse = new BaseResponse();
-        baseResponse.status.code = 500;
-        baseResponse.status.message = err.message;
-        return res.json(baseResponse);
-    }
-
-    next()
-};
-
-identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],async (req, res) => {
+identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         if (!req.body.id) {
-            baseResponse.status.code = 500;
-            baseResponse.status.message = 'Id is required';
-            return res.json(baseResponse);
+            response.status.code = 500;
+            response.status.message = 'Id is required';
+            return res.json(response);
         }
         const id = req.body.id;
         const lang = req.body.lang || "english";
@@ -83,6 +46,28 @@ identifierRouter.post('/identify', [uploadImage.single('image'), errorHandle],as
             response.status.message = result.answer[0];
         }
         response.result = result.answer;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+    return res.json(response);
+});
+
+identifierRouter.post('/information',  [UploadImage.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
+        const lang = req.body.lang || "english";
+        const identifierService = new IdentifierService();
+
+        response.result = await identifierService.getInfo(value, lang);
+
     } catch (err) {
         res.status(500);
         response.status.message = err.message;

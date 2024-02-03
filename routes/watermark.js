@@ -6,38 +6,11 @@ import WatermarkService from "../services/WatermarkService.js";
 import WatermarkResponse from "../responses/WatermarkResponse.js";
 import axios from "axios";
 import {BASE_URL} from "../consts.js";
+import {UploadImage} from "../middlewares/UploadImage.js";
+import {ErrorHandle} from "../middlewares/HandleError.js";
+import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 const watermarkRouter = express.Router();
-
-const storage = multer.memoryStorage();
-
-const uploadImage = multer({
-    storage: storage,
-    limits: {fileSize: 10 * 1024 * 1024},
-    fileFilter: async (req, file, cb) => {
-        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-        const fileExtension = path.extname(file.originalname).toLowerCase();
-        if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
-            return cb(null, true);
-        } else {
-            cb(new Error("Invalid file"), true);
-        }
-    },
-});
-
-const errorHandle = (err, req, res, next) => {
-    console.log(err);
-    if (err instanceof Error) {
-        res.status(500);
-        const baseResponse = new BaseResponse();
-        baseResponse.status.code = 500;
-        baseResponse.status.message = err.message;
-        return res.json(baseResponse);
-    }
-
-    next()
-};
 
 watermarkRouter.get('/image/:url(*)', async (req, res) => {
     const watermarkResponse = new WatermarkResponse();
@@ -106,7 +79,7 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
     return res.json(watermarkResponse);
 });
 
-watermarkRouter.post('/remove', [uploadImage.single('image'), errorHandle], async (req, res) => {
+watermarkRouter.post('/remove',  [UploadImage.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
     const response = new WatermarkResponse();
     try {
         const watermarkService = new WatermarkService();

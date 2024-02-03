@@ -2,6 +2,7 @@ import express from 'express';
 import {check, validationResult} from "express-validator";
 import UserResponse from "../responses/UserResponse.js";
 import UserService from "../services/UserService.js";
+import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 const userRouter = express.Router();
 
@@ -12,6 +13,7 @@ userRouter.get('/', function (req, res, next) {
 
 
 const registerValidations = [
+    HasSecurity,
     check('name')
         .exists().withMessage('Name is required'),
     check('email')

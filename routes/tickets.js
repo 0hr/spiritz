@@ -2,10 +2,12 @@ import express from 'express';
 import {check, validationResult} from "express-validator";
 import TicketResponse from "../responses/TicketResponse.js";
 import TicketService from "../services/TicketService.js";
+import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 const ticketRouter = express.Router();
 
 const validations = [
+    HasSecurity,
     check('name')
         .exists().withMessage('Name is required'),
     check('user_id')

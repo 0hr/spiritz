@@ -4,15 +4,14 @@ import path from 'path';
 import logger from 'morgan';
 import cookieParser from "cookie-parser";
 import indexRouter from './routes/index.js';
-import usersRouter from './routes/users.js';
 import tiktokRouter from "./routes/tiktok.js";
 import admin from 'firebase-admin';
 import * as serviceAccount from "./serviceAccountKey.json" assert {type: "json"};
-import 'dotenv/config'
 import ticketRouter from "./routes/tickets.js";
-import rateLimit from "express-rate-limit";
 import identifierRouter from "./routes/indetifiers.js";
 import watermarkRouter from "./routes/watermark.js";
+import countryRouter from "./routes/country.js";
+import celebrityRouter from "./routes/celebirty.js";
 
 const app = express();
 
@@ -24,6 +23,7 @@ const defaultApp = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount.default),
     databaseURL: "https://plant-b23ab-default-rtdb.firebaseio.com"
 });
+
 
 // Firebase configuration end.
 // export const limiter = rateLimit({
@@ -45,10 +45,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/', indexRouter);
-app.use('/tickets', ticketRouter);
-app.use('/tiktok', tiktokRouter);
-app.use('/identifiers', identifierRouter);
-app.use('/watermark', watermarkRouter);
+app.use('/api/tickets', ticketRouter);
+app.use('/api/tiktok', tiktokRouter);
+app.use('/api/identifiers', identifierRouter);
+app.use('/api/watermark', watermarkRouter);
+app.use('/api/country', countryRouter);
+app.use('/api/celebrity', celebrityRouter);
 
 
 export default app;

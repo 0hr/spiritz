@@ -3,11 +3,13 @@ import TiktokService from "../services/TiktokService.js";
 import BaseResponse from "../responses/BaseResponse.js";
 import TiktokResponse from "../responses/TiktokResponse.js";
 import {check, validationResult} from 'express-validator';
+import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 
 const tiktokRouter = express.Router();
 
 const validations = [
+    HasSecurity,
     check('url')
         .exists().withMessage('Url is required')
         .matches(/^https:\/\/(?:m|www|vm)?\.tiktok\.com\/.*$/).withMessage('Data is not tiktok url')

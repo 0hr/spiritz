@@ -30,7 +30,6 @@ export default class IdentifierService {
         return list;
     }
 
-
     async identify(id, image, lang) {
         const db = admin.firestore();
         const collection = db.collection('identifications');
@@ -80,6 +79,38 @@ export default class IdentifierService {
                             image_url: {
                                 url: image,
                             }
+                        },
+                    ]
+                }
+            ]
+        });
+        return completion.choices[0]?.message?.content;
+    }
+
+    async getInfo(value, lang) {
+
+        const completion = await this.openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            max_tokens: 255,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: "Execute the prompt and following instructions. Only perform the specified actions and refrain from any additional actions."
+                        },
+                        {
+                            type: 'text',
+                            text: 'Give me information about ' + value
+                        },
+                        {
+                            type: 'text',
+                            text: value + ' must be first sentence and inside parenthesis.'
+                        },
+                        {
+                            type: 'text',
+                            text: `Provide the answer in the language indicated by the language code ${lang}, and refrain from translating JSON keys.`
                         },
                     ]
                 }
