@@ -1,6 +1,5 @@
 import express from 'express';
 import TiktokService from "../services/TiktokService.js";
-import BaseResponse from "../responses/BaseResponse.js";
 import TiktokResponse from "../responses/TiktokResponse.js";
 import {check, validationResult} from 'express-validator';
 import {HasSecurity} from "../middlewares/HasSecurity.js";

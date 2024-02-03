@@ -18,4 +18,3 @@ export default class AES {
         return (decrypted + decipher.final('utf8'));
     };
 }
-

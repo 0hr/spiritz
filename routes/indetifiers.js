@@ -76,5 +76,4 @@ identifierRouter.post('/information',  [UploadImage.single('image'), ErrorHandle
     return res.json(response);
 });
 
-
 export default identifierRouter;

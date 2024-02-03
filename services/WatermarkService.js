@@ -4,7 +4,6 @@ import {GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client} from "@
 import {imageHash} from "image-hash";
 import axios from "axios";
 import {getSignedUrl,} from "@aws-sdk/s3-request-presigner";
-
 export default class WatermarkService {
     constructor() {
         this.s3Client = new S3Client({

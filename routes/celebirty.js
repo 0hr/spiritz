@@ -21,5 +21,4 @@ celebrityRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Has
     return res.json(response);
 });
 
-
 export default celebrityRouter;

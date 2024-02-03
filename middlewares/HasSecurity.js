@@ -1,10 +1,5 @@
-import * as crypto from "crypto";
 import BaseResponse from "../responses/BaseResponse.js";
-import {AUTH_KEY} from "../consts.js";
-import formidable from "formidable";
-import {decrypt} from "dotenv";
 import AES from "../utils/AES.js";
-
 
 export const HasSecurity = async (req, res, next) => {
 

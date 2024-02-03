@@ -1,9 +1,7 @@
 import express from 'express';
-import BaseResponse from "../responses/BaseResponse.js";
 import admin from "firebase-admin"
 import path from "path";
 import {__dirname} from "../app.js";
-import {fileURLToPath} from "url";
 
 const indexRouter = express.Router();
 
@@ -31,6 +29,5 @@ indexRouter.get('/configs', async (req, res, next) => {
     }
     res.json(version);
 });
-
 
 export default indexRouter;

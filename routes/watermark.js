@@ -1,6 +1,4 @@
-import BaseResponse from "../responses/BaseResponse.js";
 import express from "express";
-import multer from "multer";
 import path from "path";
 import WatermarkService from "../services/WatermarkService.js";
 import WatermarkResponse from "../responses/WatermarkResponse.js";

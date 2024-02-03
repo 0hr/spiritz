@@ -3,6 +3,7 @@ import geoip from "geoip-lite";
 import CountryService from "../services/CountryService.js";
 import CountryPredictResultResponse from "../responses/CountryPredictResultResponse.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
+
 const countryRouter = express.Router();
 
 countryRouter.post('/predict',[HasSecurity], async(req, res) => {

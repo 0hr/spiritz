@@ -1,6 +1,5 @@
 import {ZENDESK_API_EMAIL, ZENDESK_API_TOKEN, ZENDESK_API_URL} from "../consts.js";
 import axios from "axios";
-
 export default class TicketService {
     async createTicket(name, email, subject, message, user_id, tags = [], priority = 'normal') {
         const ticketData = {
@@ -31,5 +30,4 @@ export default class TicketService {
             },
         });
     }
-
 }

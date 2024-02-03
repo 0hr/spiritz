@@ -1,6 +1,4 @@
 import * as vision from "@google-cloud/vision";
-import celebirty from "../routes/celebirty.js";
-
 
 export default class CelebrityService {
     async recognize(image) {
