@@ -12,6 +12,7 @@ import identifierRouter from "./routes/indetifiers.js";
 import watermarkRouter from "./routes/watermark.js";
 import countryRouter from "./routes/country.js";
 import celebrityRouter from "./routes/celebirty.js";
+import AES from "./utils/AES.js";
 
 const app = express();
 
@@ -51,6 +52,10 @@ app.use('/api/identifiers', identifierRouter);
 app.use('/api/watermark', watermarkRouter);
 app.use('/api/country', countryRouter);
 app.use('/api/celebrity', celebrityRouter);
+
+// app.use('/getData', (req, res) => {
+//    return res.json({data: AES.encrpyt(JSON.stringify({time: new Date().getTime()}))})
+// });
 
 
 export default app;

@@ -54,7 +54,7 @@ identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Ha
     return res.json(response);
 });
 
-identifierRouter.post('/information',  [UploadImage.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+identifierRouter.post('/information',  [HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         if (!req.body.value) {
