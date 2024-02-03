@@ -43,7 +43,7 @@ export const HasSecurity = async (req, res, next) => {
     if ((time - sessionData.time)  > 1000 * 60 * 2) {
         res.status(500);
         baseResponse.status.code = 500;
-        baseResponse.status.message = 'You are not authorized. Expired session -> '
+        baseResponse.status.message = 'You are not authorized. Expired session'
         return res.json(baseResponse);
     }
 
