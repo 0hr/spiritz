@@ -34,6 +34,7 @@ export default class CelebrityService {
 
         }
 
+
         return Object.values(celebirties);
     }
 }

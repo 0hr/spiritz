@@ -12,7 +12,14 @@ celebrityRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Has
     try {
         const celebrityService = new CelebrityService();
         const imageBase64 = req.file.buffer.toString('base64');
-        response.result = await celebrityService.recognize(imageBase64);
+        const result = await celebrityService.recognize(imageBase64);
+        if (result.length > 0) {
+            response.result = result;
+        } else {
+            res.status(400);
+            response.status = 400;
+            response.result = [];
+        }
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
