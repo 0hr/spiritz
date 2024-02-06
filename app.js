@@ -53,7 +53,7 @@ app.use('/api/watermark', watermarkRouter);
 app.use('/api/country', countryRouter);
 app.use('/api/celebrity', celebrityRouter);
 
-// app.use('/getData', (req, res) => {
+// app.get('/getData', (req, res) => {
 //    return res.json({data: AES.encrpyt(JSON.stringify({time: new Date().getTime()}))})
 // });
 

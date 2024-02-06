@@ -60,11 +60,11 @@ export default class IdentifierService {
                         },
                         {
                             type: 'text',
-                            text: "Use the 'status' field for the assigned status.  Place the answer in the 'answer' field as array. If multiple items are identified, include them in the 'answer' field as an array. "
+                            text: "Use the 'status' field for the assigned status. Place the answer in the 'answer' field as array. If more than one, multiple items are identified, include them in the 'answer' field as an array in each item. "
                         },
                         {
                             type: 'text',
-                            text: "If no items are identified, add the answer is in answer field as an array.  Only Provide answer and status fields and provide only answers in 'answer' field as an array."
+                            text: "If no items are identified, add the answer is in answer field as an array as a negative answer. Only Provide answer and status fields and provide only answers in 'answer' field as an array."
                         },
                         {
                             type: 'text',
