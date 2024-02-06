@@ -110,7 +110,7 @@ export default class IdentifierService {
                         },
                         {
                             type: 'text',
-                            text: `Provide the answer in the language indicated by the language code ${lang}, and refrain from translating JSON keys.`
+                            text: `Provide the answer in the language indicated by the language code ${lang}`
                         },
                     ]
                 }
