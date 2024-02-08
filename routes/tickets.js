@@ -3,6 +3,7 @@ import {check, validationResult} from "express-validator";
 import TicketResponse from "../responses/TicketResponse.js";
 import TicketService from "../services/TicketService.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
+import {APP_NAME} from "../consts.js";
 
 const ticketRouter = express.Router();
 
@@ -39,7 +40,7 @@ ticketRouter.post('/create', validations, async (req, res) => {
         const name = req.body.name;
         const email = req.body.email;
         const message = req.body.message;
-        const subject = req.body.subject;
+        const subject = req.body.subject + `(${APP_NAME})`;
         const tags = req.body.tags;
         const userId = req.body.user_id;
         const ticketService = new TicketService();
