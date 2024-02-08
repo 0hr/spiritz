@@ -1,4 +1,5 @@
 import {Countries, Rules} from "../utils/Countries.js";
+import {BASE_URL} from "../consts.js";
 
 export default class CountryService {
     predict(countryCode) {
@@ -32,6 +33,9 @@ export default class CountryService {
                     item.prediction--;
                 }
             }
+        }
+        for (const item of result) {
+            item['image'] = `${BASE_URL}/assets/flags/${item['code'].toLowerCase()}.png`;
         }
         return result;
     }
