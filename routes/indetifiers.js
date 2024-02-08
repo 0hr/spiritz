@@ -66,7 +66,7 @@ identifierRouter.post('/information',  [HasSecurity],async (req, res) => {
         const lang = req.body.lang || "english";
         const identifierService = new IdentifierService();
 
-        response.result = await identifierService.getInfo(value, lang);
+        response.result = [await identifierService.getInfo(value, lang)];
 
     } catch (err) {
         res.status(500);
