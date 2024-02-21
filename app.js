@@ -12,7 +12,6 @@ import identifierRouter from "./routes/indetifiers.js";
 import watermarkRouter from "./routes/watermark.js";
 import countryRouter from "./routes/country.js";
 import celebrityRouter from "./routes/celebirty.js";
-import AES from "./utils/AES.js";
 
 const app = express();
 
