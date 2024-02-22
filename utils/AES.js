@@ -3,7 +3,7 @@ import * as crypto from "crypto";
 
 export default class AES {
     static algo = 'aes-256-ecb';
-    static encrpyt(value) {
+    static encrypt(value) {
         let cipher = crypto.createCipheriv(AES.algo, AUTH_KEY, '');
         let encrypted = cipher.update(value, 'utf8', 'base64');
         encrypted += cipher.final('base64');
