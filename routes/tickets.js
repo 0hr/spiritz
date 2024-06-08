@@ -53,7 +53,7 @@ ticketRouter.post('/create', validations, async (req, res) => {
         response.ticket_id = ticket.ticket.id;
         response.subject = ticket.ticket.id;
         response.ticket_status = ticket.ticket.status;
-        res.json(response);
+        return res.json(response);
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
