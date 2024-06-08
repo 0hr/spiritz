@@ -11,3 +11,5 @@ export const PIXELBIN_ZONE = process.env.PIXELBIN_ZONE;
 export const AWS_S3_BUCKETNAME = process.env.AWS_S3_BUCKETNAME;
 export const AWS_S3_REGION = process.env.AWS_S3_REGION;
 export const AUTH_KEY = process.env.AUTH_KEY;
+export const MODEL_IDENTIFIER = process.env.MODEL_IDENTIFIER;
+export const MODEL_INFORMATION = process.env.MODEL_INFORMATION;

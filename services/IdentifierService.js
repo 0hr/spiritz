@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import OpenAI from 'openai';
-import {OPENAI_API_KEY} from '../consts.js';
+import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
 
 export default class IdentifierService {
 
@@ -40,7 +40,7 @@ export default class IdentifierService {
         const identifier = result.data();
 
         const completion = await this.openai.chat.completions.create({
-            model: 'gpt-4-vision-preview',
+            model: MODEL_IDENTIFIER,
             max_tokens: 255,
             messages: [
                 {
@@ -90,7 +90,7 @@ export default class IdentifierService {
     async getInfo(value, lang) {
 
         const completion = await this.openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: MODEL_INFORMATION,
             max_tokens: 255,
             messages: [
                 {
