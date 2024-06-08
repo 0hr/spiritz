@@ -38,7 +38,7 @@ export default class IdentifierService {
             throw new Error('Collection is empty');
         }
         const identifier = result.data();
-
+        console.log(identifier.prompt);
         const completion = await this.openai.chat.completions.create({
             model: MODEL_IDENTIFIER,
             max_tokens: 255,
@@ -52,11 +52,11 @@ export default class IdentifierService {
                         },
                         {
                             type: 'text',
-                            text: `Prompt: ${identifier.prompt}.`
+                            text: `Prompt: ${identifier.prompt}. Do exactly what it's the prompt.`
                         },
                         {
                             type: 'text',
-                            text: "If the given item is not found in the image, assign the status as 0; otherwise, assign it as 1. Present the results as a JSON format without markdown."
+                            text: "If the given item is not found in the image, assign the status as 0; otherwise, assign it as 1. Present the results as a JSON format without markdown. Don't use ```json and ``` markdown."
                         },
                         {
                             type: 'text',
@@ -84,6 +84,7 @@ export default class IdentifierService {
                 }
             ]
         });
+        console.log(completion.choices[0]?.message?.content);
         return completion.choices[0]?.message?.content;
     }
 
