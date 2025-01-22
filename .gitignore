@@ -67,3 +67,4 @@ node_modules/
 serviceAccountKey.json
 visionServiceAccountKey.json
 .idea/
+.DS_Store
