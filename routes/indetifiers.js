@@ -36,7 +36,7 @@ identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Ha
         const identifierService = new IdentifierService();
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
-        const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
+	const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
         if (!result.hasOwnProperty('status') || !result.hasOwnProperty('answer')) {
             throw new Error("Bad Response!")
         }
