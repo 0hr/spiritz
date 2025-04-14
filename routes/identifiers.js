@@ -36,7 +36,8 @@ identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Ha
         const identifierService = new IdentifierService();
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
-	const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
+
+	    const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
         if (!result.hasOwnProperty('status') || !result.hasOwnProperty('answer')) {
             throw new Error("Bad Response!")
         }
@@ -75,5 +76,31 @@ identifierRouter.post('/information',  [HasSecurity],async (req, res) => {
     }
     return res.json(response);
 });
+
+identifierRouter.post('/ask',  [UploadImage.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
+        const lang = req.body.lang || "english";
+        const type = await imageType(req.file.buffer);
+        const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
+
+        const identifierService = new IdentifierService();
+
+        response.result = [await identifierService.ask(imageBase64, value, lang)];
+
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+    return res.json(response);
+});
+
 
 export default identifierRouter;

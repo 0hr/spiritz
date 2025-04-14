@@ -8,7 +8,7 @@ import tiktokRouter from "./routes/tiktok.js";
 import admin from 'firebase-admin';
 import * as serviceAccount from "./serviceAccountKey.json" assert {type: "json"};
 import ticketRouter from "./routes/tickets.js";
-import identifierRouter from "./routes/indetifiers.js";
+import identifierRouter from "./routes/identifiers.js";
 import watermarkRouter from "./routes/watermark.js";
 import countryRouter from "./routes/country.js";
 import celebrityRouter from "./routes/celebirty.js";
