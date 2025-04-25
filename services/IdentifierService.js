@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import OpenAI from 'openai';
 import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
+import {getFirestore} from "firebase-admin/firestore";
 
 export default class IdentifierService {
 
@@ -12,8 +13,8 @@ export default class IdentifierService {
 
 
     async getIdentifiers() {
-        const db = admin.firestore();
-        const collection = db.collection('identifications');
+        const db = getFirestore('idnet');
+        const collection = db.doc('identifications');
         const result = await collection.get()
         if (result.empty) {
             throw new Error('Collection is empty');
@@ -31,7 +32,7 @@ export default class IdentifierService {
     }
 
     async identify(id, image, lang) {
-        const db = admin.firestore();
+        const db = getFirestore('idnet');
         const collection = db.collection('identifications');
         const result = await collection.doc(id).get()
         if (!result.exists) {
