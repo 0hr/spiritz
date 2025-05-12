@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
 import {getFirestore} from "firebase-admin/firestore";
 
-export default class IdentifierService {
+export class IdentifierService {
 
     constructor() {
         this.openai = new OpenAI({
@@ -92,6 +92,14 @@ USER INPUT VARIABLES
     - Translate only the values representing detected items into ${lang}.  
     - Perform *only* the actions described above—nothing more, nothing less.
     - Do **not** add, remove, or rename keys; do **not** include the default keys.
+    
+6. **JSON validity rule**  
+   **Output MUST be valid JSON (RFC 8259)**.  
+   ✔ Strings are double-quoted.  
+   ✔ No trailing commas.  
+   ✔ All internal double quotes are escaped (\\\\").  
+   ✔ Only one root object.  
+   ✔ Do **not** wrap in Markdown fences or add explanatory text.
 `
         console.log(prompt);
         const completion = await this.openai.chat.completions.create({

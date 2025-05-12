@@ -1,6 +1,6 @@
 import express from 'express';
 import IdentifierResponse from "../responses/IdentifierResponse.js";
-import IdentifierService from "../services/IdentifierService.js";
+import {IdentifierService} from "../services/IdentifierService.js";
 import imageType from "image-type";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
 import {UploadImage} from "../middlewares/UploadImage.js";
