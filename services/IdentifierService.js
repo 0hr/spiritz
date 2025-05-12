@@ -101,10 +101,9 @@ USER INPUT VARIABLES
    ✔ Only one root object.  
    ✔ Do **not** wrap in Markdown fences or add explanatory text.
 `
-        console.log(prompt);
         const completion = await this.openai.chat.completions.create({
             model: MODEL_IDENTIFIER,
-            max_tokens: 255,
+            max_tokens: 2000,
             messages: [
                 {
                     role: 'system',
