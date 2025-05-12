@@ -49,31 +49,51 @@ export default class IdentifierService {
                     content: [
                         {
                             type: 'text',
-                            text: "Execute the prompt and following instructions. Only perform the specified actions and refrain from any additional actions."
-                        },
-                        {
-                            type: 'text',
-                            text: `Prompt: ${identifier.prompt}. Do exactly what it's the prompt.`
-                        },
-                        {
-                            type: 'text',
-                            text: "If the given item is not found in the image, assign the status as 0; otherwise, assign it as 1. Present the results as a JSON format without markdown. Don't use ```json and ``` markdown."
-                        },
-                        {
-                            type: 'text',
-                            text: "Use the 'status' field for the assigned status. Place the answer in the 'answer' field as array. If more than one, multiple items are identified, include them in the 'answer' field as an array in each item. "
-                        },
-                        {
-                            type: 'text',
-                            text: "If no items are identified, add the answer is in answer field as an array as a negative answer. Only Provide answer and status fields and provide only answers in 'answer' field as an array."
-                        },
-                        {
-                            type: 'text',
-                            text: "Answered each item should not be json. Each item should be a text. "
-                        },
-                        {
-                            type: 'text',
-                            text: `Provide the answer in the language indicated by the language code ${lang}, and refrain from translating JSON keys.`
+                            text: `
+You are an image-analysis assistant. Follow the rules below *exactly*; any deviation is a failure.
+
+────────────────────────────────
+USER INPUT VARIABLES
+• Prompt text:  \${identifier.prompt}
+• Language code: \${lang}          (e.g. "en", "tr", "es")
+────────────────────────────────
+
+1. **Image task**  
+   Read \${identifier.prompt} and examine the user-supplied image(s).  
+   For every requested item: set **"status": 1** if the item appears; otherwise **0**.
+
+2. **Answer field**  
+   Put your textual answers in an array under **"answer"**.  
+   – Translate each answer string into \${lang}.  
+   – If *no* items are found, return a single negative answer inside the array.
+
+3. **Optional blocks**  
+   • If the prompt contains **primary_info**, append  
+                            "primary_info": [
+                                { "title": "...", "desc": "..." },
+                                { "title": "...", "desc": "..." },
+                                ...
+                            ]
+     (Add as many objects as provided.)  
+   • If it contains exactly three **type_tags**, append  (Extract up to three type tags)
+                            "type_tags": ["tag1", "tag2", "tag3"]
+
+4. **Output format** (order matters)  
+   Return one **un-fenced JSON object** with keys in this sequence:
+{
+"status": <0 or 1>,
+"answer": [ ... ],
+"primary_info": [ ... ], // omit if unavailable
+"type_tags": [ ... ] // omit if unavailable
+}
+
+– **Do not** wrap the JSON in Markdown or back-ticks.  
+– **Do not** translate key names.  
+– **Do not** include any other fields, text, or commentary.
+
+5. **One-shot**  
+Perform *only* what is described above—nothing more, nothing less.
+`
                         },
                     ]
                 },
