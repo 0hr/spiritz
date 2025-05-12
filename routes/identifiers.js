@@ -46,7 +46,7 @@ identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Ha
             response.status.code = 400;
             response.status.message = result.answer[0];
         }
-        response.result = result.answer;
+        response.result = result;
     } catch (err) {
         res.status(500);
         response.status.message = err.message;

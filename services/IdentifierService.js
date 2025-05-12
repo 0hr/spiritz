@@ -14,7 +14,7 @@ export default class IdentifierService {
 
     async getIdentifiers() {
         const db = getFirestore('idnet');
-        const collection = db.doc('identifications');
+        const collection = db.collection('identifications');
         const result = await collection.get()
         if (result.empty) {
             throw new Error('Collection is empty');
@@ -40,6 +40,60 @@ export default class IdentifierService {
         }
         const identifier = result.data();
         console.log(identifier.prompt);
+        const prompt = `
+You are an image-analysis assistant. Follow the rules below *exactly*; any deviation is a failure.
+
+────────────────────────────────
+USER INPUT VARIABLES
+• Prompt text:  ${identifier.prompt}
+• Language code: ${lang}          (e.g. "en", "tr", "es")
+• Optional schema:  If the prompt contains a line starting with **"output_schema:"** followed by valid JSON, treat that JSON object as the exact output template.
+────────────────────────────────
+
+1. **Image task**  
+   Read ${identifier.prompt} and examine the user-supplied image(s).  
+   For every requested item: set **"status": 1** if the answer positive; otherwise **0**.
+   
+2. **Answer field**  
+   Put your textual answers in an array under **"answer"**.  
+   - Translate each answer string into ${lang}.  
+   - If *no* items are found, return a single negative answer inside the array.
+   - if the prompt contain **give more detail**, **give more detail about the answer!**
+3. **Optional blocks**  
+   - If the prompt contains **primary_info**, append  
+                            "primary_info": [
+                                { "title": "...", "desc": "..." },
+                                { "title": "...", "desc": "..." },
+                                ...
+                            ]
+     (Add as many objects as provided. title text is always first letter capitalized. title text must be translated into ${lang}, give short description, **one or two words**, not more than *two words*)
+     if primary info keys default values, choose one of them, do not add anything more than default values.
+   - If the prompt contains, type tags,  Extract up to three type tags three **type_tags**, append
+                            "type_tags": ["tag1", "tag2", "tag3"]
+   - If an **output_schema** JSON object is provided, reproduce that object *exactly*, keeping every key and structural shape, but replace the placeholder values with the correct results.
+4. **Output format** (order matters)  
+   Return one **un-fenced JSON object** with keys in this sequence:
+{
+"status": <0 or 1>,
+"answer": [ ... ],
+"primary_info": [ ... ], // omit if unavailable
+"type_tags": [ ... ] // omit if unavailable
+...
+}
+
+5. **General formatting rules**  
+    - if has primary info or type tags in the prompt, **always** include them.  
+    - **Do not** wrap the JSON in Markdown or back-ticks.  
+    - **Do not** translate key names.  
+    - **Do not** include any other fields, text, or commentary.
+    - Output **one** JSON object, **without** Markdown fences or commentary.
+    - Output **always** valid JSON object, should have keys, **no errors**. 
+    - Keep all key names in English, even after translation.  
+    - Translate only the values representing detected items into ${lang}.  
+    - Perform *only* the actions described above—nothing more, nothing less.
+    - Do **not** add, remove, or rename keys; do **not** include the default keys.
+`
+        console.log(prompt);
         const completion = await this.openai.chat.completions.create({
             model: MODEL_IDENTIFIER,
             max_tokens: 255,
@@ -49,51 +103,7 @@ export default class IdentifierService {
                     content: [
                         {
                             type: 'text',
-                            text: `
-You are an image-analysis assistant. Follow the rules below *exactly*; any deviation is a failure.
-
-────────────────────────────────
-USER INPUT VARIABLES
-• Prompt text:  \${identifier.prompt}
-• Language code: \${lang}          (e.g. "en", "tr", "es")
-────────────────────────────────
-
-1. **Image task**  
-   Read \${identifier.prompt} and examine the user-supplied image(s).  
-   For every requested item: set **"status": 1** if the item appears; otherwise **0**.
-
-2. **Answer field**  
-   Put your textual answers in an array under **"answer"**.  
-   – Translate each answer string into \${lang}.  
-   – If *no* items are found, return a single negative answer inside the array.
-
-3. **Optional blocks**  
-   • If the prompt contains **primary_info**, append  
-                            "primary_info": [
-                                { "title": "...", "desc": "..." },
-                                { "title": "...", "desc": "..." },
-                                ...
-                            ]
-     (Add as many objects as provided.)  
-   • If it contains exactly three **type_tags**, append  (Extract up to three type tags)
-                            "type_tags": ["tag1", "tag2", "tag3"]
-
-4. **Output format** (order matters)  
-   Return one **un-fenced JSON object** with keys in this sequence:
-{
-"status": <0 or 1>,
-"answer": [ ... ],
-"primary_info": [ ... ], // omit if unavailable
-"type_tags": [ ... ] // omit if unavailable
-}
-
-– **Do not** wrap the JSON in Markdown or back-ticks.  
-– **Do not** translate key names.  
-– **Do not** include any other fields, text, or commentary.
-
-5. **One-shot**  
-Perform *only* what is described above—nothing more, nothing less.
-`
+                            text: prompt
                         },
                     ]
                 },
