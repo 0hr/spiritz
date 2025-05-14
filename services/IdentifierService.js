@@ -59,7 +59,10 @@ USER INPUT VARIABLES
    - Translate each answer string into ${lang}.  
    - If *no* items are found, return a single negative answer inside the array.
    - if the prompt contain **give more detail**, **give more detail about the answer!**
-3. **Optional blocks**  
+3. **Title field**  
+   Put your title text in a single string under **"title"**.  
+   - Translate the title text into ${lang}.
+4. **Optional blocks**  
    - If the prompt contains **primary_info**, append  
                             "primary_info": [
                                 { "title": "...", "desc": "..." },
@@ -71,17 +74,18 @@ USER INPUT VARIABLES
    - If the prompt contains, type tags,  Extract up to three type tags three **type_tags**, append
                             "type_tags": ["tag1", "tag2", "tag3"]
    - If an **output_schema** JSON object is provided, reproduce that object *exactly*, keeping every key and structural shape, but replace the placeholder values with the correct results.
-4. **Output format** (order matters)  
+5. **Output format** (order matters)  
    Return one **un-fenced JSON object** with keys in this sequence:
 {
 "status": <0 or 1>,
+"title: "..."
 "answer": [ ... ],
 "primary_info": [ ... ], // omit if unavailable
 "type_tags": [ ... ] // omit if unavailable
 // if output_schema has
 }
 
-5. **General formatting rules**  
+6. **General formatting rules**  
     - if has primary info or type tags in the prompt, **always** include them.  
     - **Do not** wrap the JSON in Markdown or back-ticks.  
     - **Do not** translate key names.  
@@ -93,7 +97,7 @@ USER INPUT VARIABLES
     - Perform *only* the actions described above—nothing more, nothing less.
     - Do **not** add, remove, or rename keys; do **not** include the default keys.
     
-6. **JSON validity rule**  
+7. **JSON validity rule**  
    **Output MUST be valid JSON (RFC 8259)**.  
    ✔ Strings are double-quoted.  
    ✔ No trailing commas.  
