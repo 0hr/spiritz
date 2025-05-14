@@ -62,6 +62,7 @@ USER INPUT VARIABLES
 3. **Title field**  
    Put your title text in a single string under **"title"**.  
    - Translate the title text into ${lang}.
+   - it will be name of identified object. Don't put more than name of the object.
 4. **Optional blocks**  
    - If the prompt contains **primary_info**, append  
                             "primary_info": [
