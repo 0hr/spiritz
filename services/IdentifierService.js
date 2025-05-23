@@ -70,8 +70,9 @@ USER INPUT VARIABLES
                                 { "title": "...", "desc": "..." },
                                 ...
                             ]
-     (Add as many objects as provided. title text is always first letter capitalized. title text must be translated into ${lang}, give short description, **one or two words**, not more than *two words*)
+     (Add as many objects as provided. title text is always first letter capitalized. title text must be translated into ${lang} and **one or two words**, not more than **two words**.  give short description, **one or two words**, not more than **two words**)
      if primary info keys default values, choose one of them, do not add anything more than default values.
+     primary info must be **4 info**, not more than or less than 4.
    - If the prompt doesn't contain **primary_info**, do not add any **primary_info** block. 
    - If the prompt contains, type tags,  Extract up to three type tags three **type_tags**, append
                             "type_tags": ["tag1", "tag2", "tag3"]
