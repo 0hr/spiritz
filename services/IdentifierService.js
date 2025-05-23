@@ -72,9 +72,12 @@ USER INPUT VARIABLES
                             ]
      (Add as many objects as provided. title text is always first letter capitalized. title text must be translated into ${lang}, give short description, **one or two words**, not more than *two words*)
      if primary info keys default values, choose one of them, do not add anything more than default values.
+   - If the prompt doesn't contain **primary_info**, do not add any **primary_info** block. 
    - If the prompt contains, type tags,  Extract up to three type tags three **type_tags**, append
                             "type_tags": ["tag1", "tag2", "tag3"]
+   - If the prompt doesn't contain, type tags, do not add any **type_tags** block. '
    - If an **output_schema** JSON object is provided, reproduce that object *exactly*, keeping every key and structural shape, but replace the placeholder values with the correct results.
+   - If no **output_schema** JSON object is provided, do not add any **output_schema** block.
 5. **Output format** (order matters)  
    Return one **un-fenced JSON object** with keys in this sequence:
 {
