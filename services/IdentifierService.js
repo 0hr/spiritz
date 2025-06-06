@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import OpenAI from 'openai';
 import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
 import {getFirestore} from "firebase-admin/firestore";
+import fs from "fs/promises";
 
 export class IdentifierService {
 
@@ -207,5 +208,127 @@ Important:
         });
 
         return completion.choices[0]?.message?.content;
+    }
+
+    async analyzePhoto(image, lang) {
+
+        const completion = await this.openai.chat.completions.create({
+            model: MODEL_IDENTIFIER,
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a meticulous visual analyst.
+
+TASK  
+1. **Emotion Analysis – People**  
+   • For every clearly visible person, identify:
+     - "id" person id (eg. 1, 2, 3)
+     – "emotion" Primary facial emotion (joy, sadness, anger, fear, surprise, disgust, neutral).  
+     – "confidence" Confidence level (0-1 score reflecting overall certainty).  
+     – "cues" Notable body-language cues supporting the emotion.
+     - "overall" describe overall in 3-5 sentence.
+   • If faces are obscured or ambiguous, state “uncertain” and explain why in "overall" 
+2. **Scene / Environment Analysis**  
+   • "setting" Summarize the setting (indoor/outdoor, location type, time of day, lighting).  
+   • "salient_features" List salient objects or features that influence the scene’s mood.  
+   • "atmosphere" Describe the overall atmosphere in 1-2 sentences (e.g., “relaxed summer picnic”, “tense corporate meeting”).
+   • "details" Describe the details of the scene in 3-5 sentences. (e.g, Small plates with what look like mezze/tapas remnants: dips, olives, maybe avocado.)
+3. Overall Result: "overall" Describe the overall atmosphere in 3-5 sentences. 
+4. Status "status", if photo is related about people or scene return true. if not return false.
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.
+OUTPUT FORMAT (strict)  
+{
+    "people": [
+        {
+            "id": 1,
+            "emotion": "joy",
+            "confidence": 92,
+            "cues": ["broad smile", "raised cheeks", "relaxed shoulders"],
+            "overall": "He is happy and eating his food. He is enjoying"
+        },
+        ...
+    ],
+    "scene": {
+        "setting": "outdoor, urban rooftop at dusk",
+        "salient_features": ["string lights", "city skyline", "potted plants"],
+        "atmosphere": "festive yet intimate gathering",
+        "details": "Two cocktails (one mostly finished) and several water glasses; an ashtray and cigarette pack sit near the center—casual dining rather than formal."
+    }
+    "overall": "It’s a friendly, candid keepsake shot that captures the energy of a night out—think “friends’ reunion dinner” or “team celebrating a milestone.” The lighting and tight framing pull the viewer right into the circle."
+    "status": true
+}
+`
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image,
+                            }
+                        },
+                    ]
+                }
+            ]
+        });
+
+        return completion.choices[0]?.message?.content;
+    }
+
+    async analyzeSound(file, type, lang, fileExtension) {
+        // 2  Call GPT-4o with the audio payload
+        const chat = await this.openai.chat.completions.create({
+            model: "gpt-4o-audio-preview-2024-12-17",
+            temperature: 0.4,                      // keeps it focused
+            max_tokens: 300,                       // allow room for detail
+            messages: [
+                {
+                    role: "system",
+                    content: [
+                        {
+                            type: "text",
+                            text: `You are an ${type.toUpperCase()} animal sound analyst. 
+Your primary function is to meticulously analyze audio recordings of ${type}. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
+Give a concise but information-rich JSON report with these keys:
+
+1. "species" – confirm it is a ${type} or flag uncertainty.
+2. "vocalization_type" – e.g. single bark, repetitive barking, whine, growl, e.g. meow, purr, hiss, yowl, trill.
+3. "likely_emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+4. "possible_triggers" – list 1-3 plausible causes for that emotion.
+5. "acoustic_features" – brief numbers or descriptors: pitch range (Hz), average duration (ms),
+   bark rate (per second), presence/absence of growl formants, purr frequency (Hz) etc.
+6. "confidence" – 0-1 score reflecting overall certainty.
+7. "information" Give about information about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated?
+8. "status" return true
+
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not a ${type}, return "status": false and in "message" put "It's not a ${type}" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.`
+                        },
+                    ],
+                },
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "input_audio",
+                            input_audio: {
+                                data: file,
+                                format: fileExtension,
+                            },
+                        },
+                    ],
+                },
+            ],
+        });
+
+        return chat.choices[0].message.content
     }
 }

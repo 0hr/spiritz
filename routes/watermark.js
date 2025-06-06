@@ -4,7 +4,7 @@ import WatermarkService from "../services/WatermarkService.js";
 import WatermarkResponse from "../responses/WatermarkResponse.js";
 import axios from "axios";
 import {BASE_URL} from "../consts.js";
-import {UploadImage} from "../middlewares/UploadImage.js";
+import {Upload} from "../middlewares/Upload.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
 
@@ -77,7 +77,7 @@ watermarkRouter.get('/image/:url(*)', async (req, res) => {
     return res.json(watermarkResponse);
 });
 
-watermarkRouter.post('/remove',  [UploadImage.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
+watermarkRouter.post('/remove',  [Upload.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
     const response = new WatermarkResponse();
     try {
         const watermarkService = new WatermarkService();

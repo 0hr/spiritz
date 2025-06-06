@@ -4,7 +4,6 @@ import AES from "../utils/AES.js";
 export const HasSecurity = async (req, res, next) => {
 
     const baseResponse = new BaseResponse();
-    console.log(req.body)
     if (Object.keys(req.body).length === 0) {
         res.status(500);
         baseResponse.status.code = 500;

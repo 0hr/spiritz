@@ -2,12 +2,12 @@ import express from 'express';
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
 import CelebrityService from "../services/CelebrityService.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
-import {UploadImage} from "../middlewares/UploadImage.js";
+import {Upload} from "../middlewares/Upload.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
 
 const celebrityRouter = express.Router();
 
-celebrityRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
+celebrityRouter.post('/identify', [Upload.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         const celebrityService = new CelebrityService();
