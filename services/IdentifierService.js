@@ -3,12 +3,33 @@ import OpenAI from 'openai';
 import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
 import {getFirestore} from "firebase-admin/firestore";
 import fs from "fs/promises";
+import {VertexAI} from "@google-cloud/vertexai";
 
 export class IdentifierService {
 
     constructor() {
         this.openai = new OpenAI({
             apiKey: OPENAI_API_KEY,
+        });
+
+        const PROJECT_ID = 'sense-16617';
+
+        // const LOCATION = 'us-central1';
+
+        const KEY_PATH = './vertexServiceKey.json';
+
+        const MODEL = 'gemini-2.0-flash';
+
+        const vertexAI = new VertexAI({
+            project: PROJECT_ID,
+            // location: LOCATION,
+            googleAuthOptions: {
+                keyFilename: KEY_PATH
+            }
+        });
+
+        this.generativeModel = vertexAI.getGenerativeModel({
+            model: MODEL,
         });
     }
 
@@ -278,57 +299,106 @@ OUTPUT FORMAT (strict)
         return completion.choices[0]?.message?.content;
     }
 
-    async analyzeSound(file, type, lang, fileExtension) {
-        // 2  Call GPT-4o with the audio payload
-        const chat = await this.openai.chat.completions.create({
-            model: "gpt-4o-audio-preview-2024-12-17",
-            temperature: 0.4,                      // keeps it focused
-            max_tokens: 300,                       // allow room for detail
-            messages: [
-                {
-                    role: "system",
-                    content: [
-                        {
-                            type: "text",
-                            text: `You are an ${type.toUpperCase()} animal sound analyst. 
+    async analyzeSound(file, type, lang) {
+        const prompt = `You are an ${type.toUpperCase()} animal sound analyst. 
 Your primary function is to meticulously analyze audio recordings of ${type}. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
 Give a concise but information-rich JSON report with these keys:
 
-1. "species" – confirm it is a ${type} or flag uncertainty.
-2. "vocalization_type" – e.g. single bark, repetitive barking, whine, growl, e.g. meow, purr, hiss, yowl, trill.
-3. "likely_emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
-4. "possible_triggers" – list 1-3 plausible causes for that emotion.
-5. "acoustic_features" – brief numbers or descriptors: pitch range (Hz), average duration (ms),
-   bark rate (per second), presence/absence of growl formants, purr frequency (Hz) etc.
-6. "confidence" – 0-1 score reflecting overall certainty.
-7. "information" Give about information about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated?
-8. "status" return true
-
+1. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+2. "possible_triggers" – list 1-3 plausible causes for that emotion.
+3. "confidence" –  0-100% percentage score reflecting overall certainty.
+4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the ${type}'s state
+5. "speak" – friendly human-like sentence summarising the advice.
+6. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
 If it's not a ${type}, return "status": false and in "message" put "It's not a ${type}" (translate into ${lang} language or ${lang} language code.)
 
 Important rule
 1. Every json values must translate into ${lang} language or ${lang} language code.
-Respond with raw JSON only — no prose.`
-                        },
-                    ],
-                },
+Respond with raw JSON only — no prose.\`
+        `
+        const request = {
+            contents: [
                 {
-                    role: "user",
-                    content: [
-                        {
-                            type: "input_audio",
-                            input_audio: {
-                                data: file,
-                                format: fileExtension,
-                            },
-                        },
-                    ],
-                },
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
             ],
-        });
+        };
 
-        return chat.choices[0].message.content
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
+
+    }
+
+    async analyzeVideo(file, lang) {
+        const prompt = `
+You are an experienced veterinary behaviorist and animal-communication trainer.  
+Base your answers on evidence-backed observation and professional best practice.
+
+Tasks:
+
+1. Detect each *distinct animal* visible for ≥1 s.
+2. Give it an *id* (“A1”, “A2”…).
+3. For every id provide:
+   a. *species* (Cat / Dog)  
+   b. key *behavioral cues*  
+   c. *primary emotional state* + confidence  
+   d. *intent / message* (one sentence) + confidence  
+   e. *current_action* – what the animal appears to be actively trying to do (one short clause) 
+   f. *Do / Don’t* guidance
+4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+5. "speak" – friendly human-like sentence summarising the advice.
+6. "status" return true
+
+Return valid JSON:
+
+{
+  "animals": [
+    {
+      "id": "A1",
+      "species": "Cat" | "Dog",
+      "emotion": { "label": "<emotion>", "confidence": 87 },
+      "intent":  { "message": "<intent sentence>", "confidence": 80 },
+      "current_action": "<short clause>",
+      "recommendation": {
+        "do":   ["…","…"],
+        "dont": ["…","…"]
+      },
+      "cues": ["…","…"]
+    },
+    …
+  ],
+  "overall_advice": "Optional safety note"
+  "speak": "Optional safety note",
+  "status": true | false
+}
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not an animal or no animal in the video, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.
+`
+
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
+            ],
+        };
+
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
     }
 }

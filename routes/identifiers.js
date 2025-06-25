@@ -3,7 +3,7 @@ import IdentifierResponse from "../responses/IdentifierResponse.js";
 import {IdentifierService} from "../services/IdentifierService.js";
 import imageType from "image-type";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
-import {Upload, UploadSound} from "../middlewares/Upload.js";
+import {Upload, UploadSound, UploadVideo} from "../middlewares/Upload.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
 import path from "path";
@@ -141,19 +141,53 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
             return res.json(response);
         }
 
-        const fileExtension = path.extname(req.file.originalname).toLowerCase().slice(1);
-
         const value = req.body.value;
         const lang = req.body.lang || "english";
-        const fileBase64 = `${req.file.buffer.toString('base64')}`;
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: req.file.mimetype,
+        };
 
         const identifierService = new IdentifierService();
-
-        const result = JSON.parse(await identifierService.analyzeSound(fileBase64, value, lang, fileExtension))
+        const result_str = await identifierService.analyzeSound(fileBase64, value, lang)
+        const result = JSON.parse(result_str)
 
         if (!result.hasOwnProperty('status')) {
             throw new Error("Bad Response!")
         }
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+
+    return res.json(response);
+});
+
+identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const value = req.body.value;
+        const lang = req.body.lang || "english";
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: req.file.mimetype,
+        };
+
+        const identifierService = new IdentifierService();
+
+        const result = JSON.parse(await identifierService.analyzeVideo(fileBase64, lang))
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+
         if (!result.status) {
             res.status(400);
             response.status.code = 400;

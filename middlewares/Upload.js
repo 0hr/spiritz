@@ -31,3 +31,25 @@ export const UploadSound = multer({
         }
     },
 });
+
+export const UploadVideo = multer({
+    storage,
+    limits: { fileSize: 100 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = [
+            'video/mp4',         // .mp4
+            'video/quicktime',   // .mov
+            'video/x-m4v'        // .m4v
+        ];
+
+        const allowedExtensions = ['.mp4', '.mov', '.m4v'];
+
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid video format'), false);
+        }
+    }
+});
