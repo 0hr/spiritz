@@ -1,9 +1,9 @@
 import express from 'express';
 import IdentifierResponse from "../responses/IdentifierResponse.js";
-import IdentifierService from "../services/IdentifierService.js";
+import {IdentifierService} from "../services/IdentifierService.js";
 import imageType from "image-type";
 import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
-import {UploadImage} from "../middlewares/UploadImage.js";
+import {Upload, UploadSound, UploadVideo} from "../middlewares/Upload.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
 
@@ -23,7 +23,7 @@ identifierRouter.get('/list', async (req, res) => {
     return res.json(response);
 });
 
-identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
+identifierRouter.post('/identify', [Upload.single('image'), ErrorHandle, HasSecurity], async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         if (!req.body.id) {
@@ -37,16 +37,16 @@ identifierRouter.post('/identify', [UploadImage.single('image'), ErrorHandle, Ha
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
 
-	    const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
+        const result = JSON.parse(await identifierService.identify(id, imageBase64, lang));
         if (!result.hasOwnProperty('status') || !result.hasOwnProperty('answer')) {
             throw new Error("Bad Response!")
         }
-        if (result.status === 0) {
+        if (!result.status) {
             res.status(400);
             response.status.code = 400;
             response.status.message = result.answer[0];
         }
-        response.result = result.answer;
+        response.result = result;
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -77,7 +77,7 @@ identifierRouter.post('/information',  [HasSecurity],async (req, res) => {
     return res.json(response);
 });
 
-identifierRouter.post('/ask',  [UploadImage.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+identifierRouter.post('/ask',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
         if (!req.body.value) {
@@ -102,5 +102,129 @@ identifierRouter.post('/ask',  [UploadImage.single('image'), ErrorHandle, HasSec
     return res.json(response);
 });
 
+identifierRouter.post('/analyze-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const lang = req.body.lang || "english";
+        const type = await imageType(req.file.buffer);
+        const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
+
+        const identifierService = new IdentifierService();
+
+        const result = JSON.parse(await identifierService.analyzePhoto(imageBase64, lang))
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+    return res.json(response);
+});
+
+identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const lang = req.body.lang || "english";
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: req.file.mimetype,
+        };
+
+        const identifierService = new IdentifierService();
+        const result_str = await identifierService.analyzeSound(fileBase64, lang)
+        const result = JSON.parse(result_str)
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+
+    return res.json(response);
+});
+
+identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const lang = req.body.lang || "english";
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: req.file.mimetype,
+        };
+
+        const identifierService = new IdentifierService();
+
+        const result = JSON.parse(await identifierService.analyzeVideo(fileBase64, lang))
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+
+    return res.json(response);
+});
+
+identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const type = await imageType(req.file.buffer);
+        const lang = req.body.lang || "english";
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: type.mime,
+        };
+
+        const identifierService = new IdentifierService();
+
+        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, lang))
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+
+    return res.json(response);
+});
 
 export default identifierRouter;

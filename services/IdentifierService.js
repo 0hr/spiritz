@@ -1,20 +1,48 @@
-import admin from 'firebase-admin';
 import OpenAI from 'openai';
-import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
+import {
+    FIREBASE_COLLECTION,
+    FIREBASE_DATABASE_ID,
+    MODEL_IDENTIFIER,
+    MODEL_INFORMATION,
+    OPENAI_API_KEY,
+    VERTEX_API_PROJECT_ID
+} from '../consts.js';
+import {getFirestore} from "firebase-admin/firestore";
+import {VertexAI} from "@google-cloud/vertexai";
 
-export default class IdentifierService {
+export class IdentifierService {
 
     constructor() {
         this.openai = new OpenAI({
             apiKey: OPENAI_API_KEY,
         });
+
+        const PROJECT_ID = VERTEX_API_PROJECT_ID;
+
+        // const LOCATION = 'us-central1';
+
+        const KEY_PATH = './vertexServiceAccountKey.json';
+
+        const MODEL = 'gemini-2.0-flash';
+
+        const vertexAI = new VertexAI({
+            project: PROJECT_ID,
+            // location: LOCATION,
+            googleAuthOptions: {
+                keyFilename: KEY_PATH
+            }
+        });
+
+        this.generativeModel = vertexAI.getGenerativeModel({
+            model: MODEL,
+        });
+
+        const db = FIREBASE_DATABASE_ID !== "" ? getFirestore(FIREBASE_DATABASE_ID) : getFirestore();
+        this.collection = db.collection(FIREBASE_COLLECTION);
     }
 
-
     async getIdentifiers() {
-        const db = admin.firestore();
-        const collection = db.collection('identifications');
-        const result = await collection.get()
+        const result = await self.collection.get()
         if (result.empty) {
             throw new Error('Collection is empty');
         }
@@ -31,48 +59,92 @@ export default class IdentifierService {
     }
 
     async identify(id, image, lang) {
-        const db = admin.firestore();
-        const collection = db.collection('identifications');
-        const result = await collection.doc(id).get()
+        const result = await self.collection.doc(id).get()
         if (!result.exists) {
             throw new Error('Collection is empty');
         }
         const identifier = result.data();
         console.log(identifier.prompt);
+        const prompt = `
+You are an image-analysis assistant. Follow the rules below *exactly*; any deviation is a failure.
+
+────────────────────────────────
+USER INPUT VARIABLES
+• Prompt text:  ${identifier.prompt}
+• Language code: ${lang}          (e.g. "en", "tr", "es")
+• Optional schema:  If the prompt contains a line starting with **"output_schema:"** followed by valid JSON, treat that JSON object as the extra output keys and values.
+────────────────────────────────
+
+1. **Image task**  
+   Read ${identifier.prompt} and examine the user-supplied image(s).  
+   For every requested item: set **"status": 1** if the answer positive; otherwise **0**.
+   
+2. **Answer field**  
+   Put your textual answers in an array under **"answer"**.  
+   - Translate each answer string into ${lang}.  
+   - If *no* items are found, return a single negative answer inside the array.
+   - if the prompt contain **give more detail**, **give more detail about the answer!**
+3. **Title field**  
+   Put your title text in a single string under **"title"**.  
+   - Translate the title text into ${lang}.
+   - it will be name of identified object. Don't put more than name of the object.
+4. **Optional blocks**  
+   - If the prompt contains **primary_info**, append  
+                            "primary_info": [
+                                { "title": "...", "desc": "..." },
+                                { "title": "...", "desc": "..." },
+                                ...
+                            ]
+     (Add as many objects as provided. title text is always first letter capitalized. title text must be translated into ${lang} and **one or two words**, not more than **two words**.  give short description, **one or two words**, not more than **two words**)
+     if primary info keys default values, choose one of them, do not add anything more than default values.
+     primary info must be **4 info**, not more than or less than 4.
+   - If the prompt doesn't contain **primary_info**, do not add any **primary_info** block. 
+   - If the prompt contains, type tags,  Extract up to three type tags three **type_tags**, append
+                            "type_tags": ["tag1", "tag2", "tag3"]
+   - If the prompt doesn't contain, type tags, do not add any **type_tags** block. '
+   - If an **output_schema** JSON object is provided, reproduce that object *exactly*, keeping every key and structural shape, but replace the placeholder values with the correct results.
+   - If no **output_schema** JSON object is provided, do not add any **output_schema** block.
+5. **Output format** (order matters)  
+   Return one **un-fenced JSON object** with keys in this sequence:
+{
+"status": <0 or 1>,
+"title: "..."
+"answer": [ ... ],
+"primary_info": [ ... ], // omit if unavailable
+"type_tags": [ ... ] // omit if unavailable
+// if output_schema has
+}
+
+6. **General formatting rules**  
+    - if has primary info or type tags in the prompt, **always** include them.  
+    - **Do not** wrap the JSON in Markdown or back-ticks.  
+    - **Do not** translate key names.  
+    - **Do not** include any other fields, text, or commentary.
+    - Output **one** JSON object, **without** Markdown fences or commentary.
+    - Output **always** valid JSON object, should have keys, **no errors**. 
+    - Keep all key names in English, even after translation.  
+    - Translate only the values representing detected items into ${lang}.  
+    - Perform *only* the actions described above—nothing more, nothing less.
+    - Do **not** add, remove, or rename keys; do **not** include the default keys.
+    
+7. **JSON validity rule**  
+   **Output MUST be valid JSON (RFC 8259)**.  
+   ✔ Strings are double-quoted.  
+   ✔ No trailing commas.  
+   ✔ All internal double quotes are escaped (\\\\").  
+   ✔ Only one root object.  
+   ✔ Do **not** wrap in Markdown fences or add explanatory text.
+`
         const completion = await this.openai.chat.completions.create({
             model: MODEL_IDENTIFIER,
-            max_tokens: 255,
+            max_tokens: 2000,
             messages: [
                 {
                     role: 'system',
                     content: [
                         {
                             type: 'text',
-                            text: "Execute the prompt and following instructions. Only perform the specified actions and refrain from any additional actions."
-                        },
-                        {
-                            type: 'text',
-                            text: `Prompt: ${identifier.prompt}. Do exactly what it's the prompt.`
-                        },
-                        {
-                            type: 'text',
-                            text: "If the given item is not found in the image, assign the status as 0; otherwise, assign it as 1. Present the results as a JSON format without markdown. Don't use ```json and ``` markdown."
-                        },
-                        {
-                            type: 'text',
-                            text: "Use the 'status' field for the assigned status. Place the answer in the 'answer' field as array. If more than one, multiple items are identified, include them in the 'answer' field as an array in each item. "
-                        },
-                        {
-                            type: 'text',
-                            text: "If no items are identified, add the answer is in answer field as an array as a negative answer. Only Provide answer and status fields and provide only answers in 'answer' field as an array."
-                        },
-                        {
-                            type: 'text',
-                            text: "Answered each item should not be json. Each item should be a text. "
-                        },
-                        {
-                            type: 'text',
-                            text: `Provide the answer in the language indicated by the language code ${lang}, and refrain from translating JSON keys.`
+                            text: prompt
                         },
                     ]
                 },
@@ -160,5 +232,213 @@ Important:
         });
 
         return completion.choices[0]?.message?.content;
+    }
+
+    async analyzePhoto(image, lang) {
+
+        const completion = await this.openai.chat.completions.create({
+            model: MODEL_IDENTIFIER,
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a meticulous visual analyst.
+
+TASK  
+1. **Emotion Analysis – People**  
+   • For every clearly visible person, identify:
+     - "id" person id (eg. 1, 2, 3)
+     – "emotion" Primary facial emotion (joy, sadness, anger, fear, surprise, disgust, neutral).  
+     – "confidence" Confidence level (0-1 score reflecting overall certainty).  
+     – "cues" Notable body-language cues supporting the emotion.
+     - "overall" describe overall in 3-5 sentence.
+   • If faces are obscured or ambiguous, state “uncertain” and explain why in "overall" 
+2. **Scene / Environment Analysis**  
+   • "setting" Summarize the setting (indoor/outdoor, location type, time of day, lighting).  
+   • "salient_features" List salient objects or features that influence the scene’s mood.  
+   • "atmosphere" Describe the overall atmosphere in 1-2 sentences (e.g., “relaxed summer picnic”, “tense corporate meeting”).
+   • "details" Describe the details of the scene in 3-5 sentences. (e.g, Small plates with what look like mezze/tapas remnants: dips, olives, maybe avocado.)
+3. Overall Result: "overall" Describe the overall atmosphere in 3-5 sentences. 
+4. Status "status", if photo is related about people or scene return true. if not return false.
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.
+OUTPUT FORMAT (strict)  
+{
+    "people": [
+        {
+            "id": 1,
+            "emotion": "joy",
+            "confidence": 92,
+            "cues": ["broad smile", "raised cheeks", "relaxed shoulders"],
+            "overall": "He is happy and eating his food. He is enjoying"
+        },
+        ...
+    ],
+    "scene": {
+        "setting": "outdoor, urban rooftop at dusk",
+        "salient_features": ["string lights", "city skyline", "potted plants"],
+        "atmosphere": "festive yet intimate gathering",
+        "details": "Two cocktails (one mostly finished) and several water glasses; an ashtray and cigarette pack sit near the center—casual dining rather than formal."
+    }
+    "overall": "It’s a friendly, candid keepsake shot that captures the energy of a night out—think “friends’ reunion dinner” or “team celebrating a milestone.” The lighting and tight framing pull the viewer right into the circle."
+    "status": true
+}
+`
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image,
+                            }
+                        },
+                    ]
+                }
+            ]
+        });
+
+        return completion.choices[0]?.message?.content;
+    }
+
+    async analyzeSound(file, lang) {
+        const prompt = `You are an animal sound analyst and experienced veterinary behaviorist and animal-communication trainer.
+Your primary function is to meticulously analyze audio recordings of animal. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
+Give a concise but information-rich JSON report with these keys:
+
+1. "species" - best guess (Cat / Dog, etc)  
+2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" – list 1-3 plausible causes for that emotion.
+4. "confidence" –  0-100% percentage score reflecting overall certainty.
+5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+6. "speak" – friendly human-like speech advice about possible triggers and overall advice
+7. "status" return true
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.\`
+        `
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
+            ],
+        };
+
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
+
+    }
+
+    async analyzeVideo(file, lang) {
+        const prompt = `
+You are an experienced veterinary behaviorist and animal-communication trainer.  
+Base your answers on evidence-backed observation and professional best practice.
+
+Tasks:
+
+1. Detect each *distinct animal* visible for ≥1 s.
+2. Give it an *id* (“A1”, “A2”…).
+3. For every id provide:
+   a. *species* (Cat / Dog)  
+   b. key *behavioral cues*  
+   c. *primary emotional state* + confidence  
+   d. *intent / message* (one sentence) + confidence  
+   e. *current_action* – what the animal appears to be actively trying to do (one short clause) 
+   f. *Do / Don’t* guidance
+4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+5. "speak" – friendly human-like speech advice about possible triggers and overall advice
+6. "status" return true
+
+Return valid JSON:
+
+{
+  "animals": [
+    {
+      "id": "A1",
+      "species": "Cat" | "Dog",
+      "emotion": { "label": "<emotion>", "confidence": 87 },
+      "intent":  { "message": "<intent sentence>", "confidence": 80 },
+      "current_action": "<short clause>",
+      "recommendation": {
+        "do":   ["…","…"],
+        "dont": ["…","…"]
+      },
+      "cues": ["…","…"]
+    },
+    …
+  ],
+  "overall_advice": "Optional safety note"
+  "speak": "Optional safety note",
+  "status": true | false
+}
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not an animal or no animal in the video, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.
+`
+
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
+            ],
+        };
+
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
+    }
+
+    async analyzeAnimalImage(file, lang) {
+        const prompt = `You are an animal image analyst and experienced veterinary behaviorist and animal-communication trainer.
+Your primary function is to meticulously analyze image of animal. Pay extremely close attention to subtle visual details.
+Give a concise but information-rich JSON report with these keys:
+
+1. "species" - best guess (Cat / Dog, etc)  
+2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" – list 1-3 plausible causes for that emotion.
+4. "confidence" –  0-100% percentage score reflecting overall certainty.
+5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+6. "speak" – friendly human-like speech advice about possible triggers and overall advice
+7. "status" return true
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.\`
+        `
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
+            ],
+        };
+
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
     }
 }
