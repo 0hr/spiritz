@@ -1,8 +1,12 @@
-import admin from 'firebase-admin';
 import OpenAI from 'openai';
-import {MODEL_IDENTIFIER, MODEL_INFORMATION, OPENAI_API_KEY} from '../consts.js';
+import {
+    FIREBASE_COLLECTION,
+    FIREBASE_DATABASE_ID,
+    MODEL_IDENTIFIER,
+    MODEL_INFORMATION,
+    OPENAI_API_KEY, VERTEX_API_PROJECT_ID
+} from '../consts.js';
 import {getFirestore} from "firebase-admin/firestore";
-import fs from "fs/promises";
 import {VertexAI} from "@google-cloud/vertexai";
 
 export class IdentifierService {
@@ -12,11 +16,11 @@ export class IdentifierService {
             apiKey: OPENAI_API_KEY,
         });
 
-        const PROJECT_ID = 'sense-16617';
+        const PROJECT_ID = VERTEX_API_PROJECT_ID;
 
         // const LOCATION = 'us-central1';
 
-        const KEY_PATH = './vertexServiceKey.json';
+        const KEY_PATH = './vertexServiceAccountKey.json';
 
         const MODEL = 'gemini-2.0-flash';
 
@@ -31,13 +35,13 @@ export class IdentifierService {
         this.generativeModel = vertexAI.getGenerativeModel({
             model: MODEL,
         });
+
+        const db = FIREBASE_DATABASE_ID !== "" ? getFirestore(FIREBASE_DATABASE_ID) : getFirestore();
+        this.collection = db.collection(FIREBASE_COLLECTION);
     }
 
-
     async getIdentifiers() {
-        const db = getFirestore('idnet');
-        const collection = db.collection('identifications');
-        const result = await collection.get()
+        const result = await self.collection.get()
         if (result.empty) {
             throw new Error('Collection is empty');
         }
@@ -54,9 +58,7 @@ export class IdentifierService {
     }
 
     async identify(id, image, lang) {
-        const db = getFirestore('idnet');
-        const collection = db.collection('identifications');
-        const result = await collection.doc(id).get()
+        const result = await self.collection.doc(id).get()
         if (!result.exists) {
             throw new Error('Collection is empty');
         }
@@ -299,20 +301,21 @@ OUTPUT FORMAT (strict)
         return completion.choices[0]?.message?.content;
     }
 
-    async analyzeSound(file, type, lang) {
-        const prompt = `You are an ${type.toUpperCase()} animal sound analyst. 
-Your primary function is to meticulously analyze audio recordings of ${type}. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
+    async analyzeSound(file, lang) {
+        const prompt = `You are an animal sound analyst and experienced veterinary behaviorist and animal-communication trainer.
+Your primary function is to meticulously analyze audio recordings of animal. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
 Give a concise but information-rich JSON report with these keys:
 
-1. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
-2. "possible_triggers" – list 1-3 plausible causes for that emotion.
-3. "confidence" –  0-100% percentage score reflecting overall certainty.
-4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the ${type}'s state
-5. "speak" – friendly human-like sentence summarising the advice.
-6. "status" return true
+1. "species" - best guess (Cat / Dog, etc)  
+2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" – list 1-3 plausible causes for that emotion.
+4. "confidence" –  0-100% percentage score reflecting overall certainty.
+5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+6. "speak" – friendly human-like speech advice about possible triggers and overall advice
+7. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
-If it's not a ${type}, return "status": false and in "message" put "It's not a ${type}" (translate into ${lang} language or ${lang} language code.)
+If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
 
 Important rule
 1. Every json values must translate into ${lang} language or ${lang} language code.
@@ -352,7 +355,7 @@ Tasks:
    e. *current_action* – what the animal appears to be actively trying to do (one short clause) 
    f. *Do / Don’t* guidance
 4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
-5. "speak" – friendly human-like sentence summarising the advice.
+5. "speak" – friendly human-like speech advice about possible triggers and overall advice
 6. "status" return true
 
 Return valid JSON:
@@ -400,5 +403,42 @@ Respond with raw JSON only — no prose.
         const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         return resultText.replace(/^```json/, '').replace(/```$/, '')
+    }
+
+    async analyzeAnimalImage(file, lang) {
+        const prompt = `You are an animal image analyst and experienced veterinary behaviorist and animal-communication trainer.
+Your primary function is to meticulously analyze image of animal. Pay extremely close attention to subtle visual details.
+Give a concise but information-rich JSON report with these keys:
+
+1. "species" - best guess (Cat / Dog, etc)  
+2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" – list 1-3 plausible causes for that emotion.
+4. "confidence" –  0-100% percentage score reflecting overall certainty.
+5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+6. "speak" – friendly human-like speech advice about possible triggers and overall advice
+7. "status" return true
+
+If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
+If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+
+Important rule
+1. Every json values must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.\`
+        `
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [ { text: prompt }, { inlineData: file } ]
+                }
+            ],
+        };
+
+        const response = await this.generativeModel.generateContent(request);
+
+        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        return resultText.replace(/^```json/, '').replace(/```$/, '')
+
     }
 }

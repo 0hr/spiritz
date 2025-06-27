@@ -6,7 +6,6 @@ import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
 import {Upload, UploadSound, UploadVideo} from "../middlewares/Upload.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
-import path from "path";
 
 const identifierRouter = express.Router();
 
@@ -135,13 +134,6 @@ identifierRouter.post('/analyze-image',  [Upload.single('image'), ErrorHandle, H
 identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
-        if (!req.body.value) {
-            response.status.code = 500;
-            response.status.message = 'Value is required';
-            return res.json(response);
-        }
-
-        const value = req.body.value;
         const lang = req.body.lang || "english";
         const fileBase64 = {
             data: req.file.buffer.toString('base64'),
@@ -149,7 +141,7 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
         };
 
         const identifierService = new IdentifierService();
-        const result_str = await identifierService.analyzeSound(fileBase64, value, lang)
+        const result_str = await identifierService.analyzeSound(fileBase64, lang)
         const result = JSON.parse(result_str)
 
         if (!result.hasOwnProperty('status')) {
@@ -173,7 +165,6 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
 identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
-        const value = req.body.value;
         const lang = req.body.lang || "english";
         const fileBase64 = {
             data: req.file.buffer.toString('base64'),
@@ -203,5 +194,37 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
     return res.json(response);
 });
 
+identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
+    const response = new IdentifierResultResponse();
+    try {
+        const type = await imageType(req.file.buffer);
+        const lang = req.body.lang || "english";
+        const fileBase64 = {
+            data: req.file.buffer.toString('base64'),
+            mimeType: type.mime,
+        };
+
+        const identifierService = new IdentifierService();
+
+        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, lang))
+
+        if (!result.hasOwnProperty('status')) {
+            throw new Error("Bad Response!")
+        }
+
+        if (!result.status) {
+            res.status(400);
+            response.status.code = 400;
+            response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
+        }
+        response.result = result;
+    } catch (err) {
+        res.status(500);
+        response.status.message = err.message;
+        response.status.code = 500;
+    }
+
+    return res.json(response);
+});
 
 export default identifierRouter;

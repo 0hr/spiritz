@@ -13,3 +13,6 @@ export const AWS_S3_REGION = process.env.AWS_S3_REGION;
 export const AUTH_KEY = process.env.AUTH_KEY;
 export const MODEL_IDENTIFIER = process.env.MODEL_IDENTIFIER;
 export const MODEL_INFORMATION = process.env.MODEL_INFORMATION;
+export const FIREBASE_DATABASE_ID = process.env.FIREBASE_DATABASE_ID;
+export const FIREBASE_COLLECTION = process.env.FIREBASE_COLLECTION;
+export const VERTEX_API_PROJECT_ID = process.env.VERTEX_API_PROJECT_ID;

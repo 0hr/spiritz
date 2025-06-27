@@ -65,7 +65,7 @@ node_modules/
 # dotenv environment variables file
 .env
 serviceAccountKey.json
-vertexServiceKey.json
+vertexServiceAccountKey.json
 visionServiceAccountKey.json
 .idea/
 .DS_Store
