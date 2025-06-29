@@ -41,7 +41,7 @@ export class IdentifierService {
     }
 
     async getIdentifiers() {
-        const result = await self.collection.get()
+        const result = await this.collection.get()
         if (result.empty) {
             throw new Error('Collection is empty');
         }
@@ -58,7 +58,7 @@ export class IdentifierService {
     }
 
     async identify(id, image, lang) {
-        const result = await self.collection.doc(id).get()
+        const result = await this.collection.doc(id).get()
         if (!result.exists) {
             throw new Error('Collection is empty');
         }
