@@ -22,18 +22,12 @@ export class IdentifierService {
 
         const KEY_PATH = './vertexServiceAccountKey.json';
 
-        const MODEL = 'gemini-2.0-flash';
-
-        const vertexAI = new VertexAI({
+        this.vertexAI = new VertexAI({
             project: PROJECT_ID,
             // location: LOCATION,
             googleAuthOptions: {
                 keyFilename: KEY_PATH
             }
-        });
-
-        this.generativeModel = vertexAI.getGenerativeModel({
-            model: MODEL,
         });
 
         const db = FIREBASE_DATABASE_ID !== "" ? getFirestore(FIREBASE_DATABASE_ID) : getFirestore();
@@ -301,26 +295,32 @@ OUTPUT FORMAT (strict)
         return completion.choices[0]?.message?.content;
     }
 
-    async analyzeSound(file, lang) {
-        const prompt = `You are an animal sound analyst and experienced veterinary behaviorist and animal-communication trainer.
-Your primary function is to meticulously analyze audio recordings of animal. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
+    async analyzeSound(file, value, lang) {
+
+        const MODEL = 'gemini-2.5-pro';
+        const generativeModel = this.vertexAI.getGenerativeModel({
+            model: MODEL,
+        });
+
+        const prompt = `You are a ${value} sound analyst and experienced veterinary behaviorist, animal-communication trainer specialized in ${value} and ${value}-vocalization analyst
+Your primary function is to meticulously analyze audio recordings of ${value}. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
 Give a concise but information-rich JSON report with these keys:
 
-1. "species" - best guess (Cat / Dog, etc)  
+1. "species" — ${value}
 2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
-3. "possible_triggers" – list 1-3 plausible causes for that emotion.
-4. "confidence" –  0-100% percentage score reflecting overall certainty.
-5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+3. "possible_triggers" – list 1–3 plausible causes for that emotion.
+4. "confidence" – 0-100% percentage score reflecting overall certainty.
+5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
 6. "speak" – friendly human-like speech advice about possible triggers and overall advice
 7. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
-If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+*Crucial Rule*: If the audio contains an animal vocalization that is not from a ${value}, or if it's not an animal at all, return a JSON object with "status": false.
+1. If it is a different animal, the "message" must state, "It's not a ${value}. It's a [species name]." (e.g., "It's not a cat. It's a <dog/cat>.") (translate into ${lang} language or ${lang} language code.)
+2. If it's not an animal sound, the "message" should reflect that (e.g., "It's not a ${value}. It seems to be a human voice."). (translate into ${lang} language or ${lang} language code.)
+1. Every JSON value must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.`
 
-Important rule
-1. Every json values must translate into ${lang} language or ${lang} language code.
-Respond with raw JSON only — no prose.\`
-        `
         const request = {
             contents: [
                 {
@@ -330,7 +330,7 @@ Respond with raw JSON only — no prose.\`
             ],
         };
 
-        const response = await this.generativeModel.generateContent(request);
+        const response = await generativeModel.generateContent(request);
 
         const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
@@ -339,8 +339,14 @@ Respond with raw JSON only — no prose.\`
     }
 
     async analyzeVideo(file, lang) {
+        const MODEL = 'gemini-2.0-flash';
+        const generativeModel = this.vertexAI.getGenerativeModel({
+            model: MODEL,
+        });
+
+
         const prompt = `
-You are an experienced veterinary behaviorist and animal-communication trainer.  
+You are an experienced veterinary behaviorist, animal-communication trainer and animal vocalization analyst
 Base your answers on evidence-backed observation and professional best practice.
 
 Tasks:
@@ -398,7 +404,7 @@ Respond with raw JSON only — no prose.
             ],
         };
 
-        const response = await this.generativeModel.generateContent(request);
+        const response = await generativeModel.generateContent(request);
 
         const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
@@ -406,6 +412,12 @@ Respond with raw JSON only — no prose.
     }
 
     async analyzeAnimalImage(file, lang) {
+        const MODEL = 'gemini-2.0-flash';
+        const generativeModel = this.vertexAI.getGenerativeModel({
+            model: MODEL,
+        });
+
+
         const prompt = `You are an animal image analyst and experienced veterinary behaviorist and animal-communication trainer.
 Your primary function is to meticulously analyze image of animal. Pay extremely close attention to subtle visual details.
 Give a concise but information-rich JSON report with these keys:
@@ -434,7 +446,7 @@ Respond with raw JSON only — no prose.\`
             ],
         };
 
-        const response = await this.generativeModel.generateContent(request);
+        const response = await generativeModel.generateContent(request);
 
         const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 

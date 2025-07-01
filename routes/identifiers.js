@@ -134,6 +134,12 @@ identifierRouter.post('/analyze-image',  [Upload.single('image'), ErrorHandle, H
 identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
         const lang = req.body.lang || "english";
         const fileBase64 = {
             data: req.file.buffer.toString('base64'),
@@ -141,7 +147,7 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
         };
 
         const identifierService = new IdentifierService();
-        const result_str = await identifierService.analyzeSound(fileBase64, lang)
+        const result_str = await identifierService.analyzeSound(fileBase64, value, lang)
         const result = JSON.parse(result_str)
 
         if (!result.hasOwnProperty('status')) {
