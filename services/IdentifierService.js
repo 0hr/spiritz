@@ -309,10 +309,11 @@ Give a concise but information-rich JSON report with these keys:
 1. "species" — ${value}
 2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
 3. "possible_triggers" – list 1–3 plausible causes for that emotion.
-4. "confidence" – 0-100% percentage score reflecting overall certainty.
-5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
-6. "speak" – friendly human-like speech advice about possible triggers and overall advice
-7. "status" return true
+4. "message" – one sentence message from the ${value}
+5. "confidence" – 0-100% percentage score reflecting overall certainty.
+6. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
+7. "speak" – friendly human-like speech advice about possible triggers and overall advice
+8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
 *Crucial Rule*: If the audio contains an animal vocalization that is not from a ${value}, or if it's not an animal at all, return a JSON object with "status": false.
@@ -425,10 +426,11 @@ Give a concise but information-rich JSON report with these keys:
 1. "species" - best guess (Cat / Dog, etc)  
 2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
 3. "possible_triggers" – list 1-3 plausible causes for that emotion.
-4. "confidence" –  0-100% percentage score reflecting overall certainty.
-5. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
-6. "speak" – friendly human-like speech advice about possible triggers and overall advice
-7. "status" return true
+4. "message" – one sentence message from the ${value}
+5. "confidence" –  0-100% percentage score reflecting overall certainty.
+6. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
+7. "speak" – friendly human-like speech advice about possible triggers and overall advice
+8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
 If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
