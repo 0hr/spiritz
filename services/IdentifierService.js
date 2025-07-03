@@ -237,12 +237,12 @@ Important:
                     content: `You are a meticulous visual analyst.
 
 TASK  
-1. **Emotion Analysis – People**  
+1. **Emotion Analysis - People**  
    • For every clearly visible person, identify:
      - "id" person id (eg. 1, 2, 3)
-     – "emotion" Primary facial emotion (joy, sadness, anger, fear, surprise, disgust, neutral).  
-     – "confidence" Confidence level (0-1 score reflecting overall certainty).  
-     – "cues" Notable body-language cues supporting the emotion.
+     - "emotion" Primary facial emotion (joy, sadness, anger, fear, surprise, disgust, neutral).  
+     - "confidence" Confidence level (0-1 score reflecting overall certainty).  
+     - "cues" Notable body-language cues supporting the emotion.
      - "overall" describe overall in 3-5 sentence.
    • If faces are obscured or ambiguous, state “uncertain” and explain why in "overall" 
 2. **Scene / Environment Analysis**  
@@ -307,12 +307,12 @@ Your primary function is to meticulously analyze audio recordings of ${value}. P
 Give a concise but information-rich JSON report with these keys:
 
 1. "species" — ${value}
-2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
-3. "possible_triggers" – list 1–3 plausible causes for that emotion.
-4. "message" – one sentence message from the ${value}
-5. "confidence" – 0-100% percentage score reflecting overall certainty.
-6. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
-7. "speak" – friendly human-like speech advice about possible triggers and overall advice
+2. "emotion" - best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" - list 1-3 plausible causes for that emotion.
+4. "message" - one sentence message from the ${value}
+5. "confidence" - 0-100% percentage score reflecting overall certainty.
+6. "overall_advice" - overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
+7. "speak" - friendly human-like speech advice about possible triggers and overall advice
 8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
@@ -359,11 +359,16 @@ Tasks:
    b. key *behavioral cues*  
    c. *primary emotional state* + confidence  
    d. *intent / message* (one sentence) + confidence  
-   e. *current_action* – what the animal appears to be actively trying to do (one short clause) 
+   e. *current_action* - what the animal appears to be actively trying to do (one short clause) 
    f. *Do / Don’t* guidance
-4. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
-5. "speak" – friendly human-like speech advice about possible triggers and overall advice
-6. "status" return true
+4. "species" - Most dominant species in the video.
+5. "emotion" - best guess (alert, excited, fearful, playful, anxious, etc.).
+6. "possible_triggers" - list 1-3 plausible causes for that emotion.
+7. "message" - one sentence message from the animal
+8. "confidence" - 0-100% percentage score reflecting overall certainty.
+9. "overall_advice" - overall advice about the sound, not just the emotion and provide additional information like how should a animal displaying this emotion be treated? concise guidance on how to respond to the its state. Explain in details
+10. "speak" - friendly human-like speech advice about possible triggers and overall advice
+11. "status" return true
 
 Return valid JSON:
 
@@ -383,7 +388,12 @@ Return valid JSON:
     },
     …
   ],
-  "overall_advice": "Optional safety note"
+  "species":  "<species>",
+  "emotion": "<emotion>",
+  "possible_triggers": ["…", "…", "…"],
+  "message": "<message>",
+  "confidence": "<confidence>",
+  "overall_advice": "<overall_advice>",
   "speak": "Optional safety note",
   "status": true | false
 }
@@ -412,33 +422,33 @@ Respond with raw JSON only — no prose.
         return resultText.replace(/^```json/, '').replace(/```$/, '')
     }
 
-    async analyzeAnimalImage(file, lang) {
+    async analyzeAnimalImage(file, value,  lang) {
         const MODEL = 'gemini-2.0-flash';
         const generativeModel = this.vertexAI.getGenerativeModel({
             model: MODEL,
         });
 
 
-        const prompt = `You are an animal image analyst and experienced veterinary behaviorist and animal-communication trainer.
-Your primary function is to meticulously analyze image of animal. Pay extremely close attention to subtle visual details.
+        const prompt = `You are a ${value} image analyst and experienced veterinary behaviorist, animal trainer specialized in ${value}
+Your primary function is to meticulously analyze image of ${value}. Pay extremely close attention to subtle visual details, as the input image levels may be very low or contain faint image.
 Give a concise but information-rich JSON report with these keys:
 
-1. "species" - best guess (Cat / Dog, etc)  
-2. "emotion" – best guess (alert, excited, fearful, playful, anxious, etc.).
-3. "possible_triggers" – list 1-3 plausible causes for that emotion.
-4. "message" – one sentence message from the ${value}
-5. "confidence" –  0-100% percentage score reflecting overall certainty.
-6. "overall_advice" – overall advice about the sound, not just the emotion and provide additional information like how should an animal displaying this emotion be treated? concise guidance on how to respond to the animal's state
-7. "speak" – friendly human-like speech advice about possible triggers and overall advice
+1. "species" — ${value}
+2. "emotion" - best guess (alert, excited, fearful, playful, anxious, etc.).
+3. "possible_triggers" - list 1-3 plausible causes for that emotion.
+4. "message" - one sentence message from the ${value}
+5. "confidence" - 0-100% percentage score reflecting overall certainty.
+6. "overall_advice" - overall advice about the image, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
+7. "speak" - friendly human-like speech advice about possible triggers and overall advice
 8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
-If it's not an animal, return "status": false and in "message" put "It's not an animal" (translate into ${lang} language or ${lang} language code.)
+*Crucial Rule*: If the audio contains an animal visualization that is not from a ${value}, or if it's not an animal at all, return a JSON object with "status": false.
+1. If it is a different animal, the "message" must state, "It's not a ${value}. It's a [species name]." (e.g., "It's not a cat. It's a <dog/cat>.") (translate into ${lang} language or ${lang} language code.)
+2. If it's not an animal image, the "message" should reflect that (e.g., "It's not a ${value}. It seems to be a human voice."). (translate into ${lang} language or ${lang} language code.)
+1. Every JSON value must translate into ${lang} language or ${lang} language code.
+Respond with raw JSON only — no prose.`
 
-Important rule
-1. Every json values must translate into ${lang} language or ${lang} language code.
-Respond with raw JSON only — no prose.\`
-        `
         const request = {
             contents: [
                 {

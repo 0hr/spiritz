@@ -203,6 +203,12 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
 identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
         const type = await imageType(req.file.buffer);
         const lang = req.body.lang || "english";
         const fileBase64 = {
@@ -212,7 +218,7 @@ identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHa
 
         const identifierService = new IdentifierService();
 
-        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, lang))
+        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, value, lang))
 
         if (!result.hasOwnProperty('status')) {
             throw new Error("Bad Response!")
