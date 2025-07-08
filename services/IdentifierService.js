@@ -4,10 +4,15 @@ import {
     FIREBASE_DATABASE_ID,
     MODEL_IDENTIFIER,
     MODEL_INFORMATION,
-    OPENAI_API_KEY, VERTEX_API_PROJECT_ID
+    OPENAI_API_KEY, VERTEX_API_PROJECT_ID,
+    AWS_S3_BUCKETNAME, AWS_S3_REGION, ELEVEN_LABS_API_KEY
 } from '../consts.js';
 import {getFirestore} from "firebase-admin/firestore";
 import {VertexAI} from "@google-cloud/vertexai";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import crypto from "crypto";
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 
 export class IdentifierService {
 
@@ -464,5 +469,58 @@ Respond with raw JSON only — no prose.`
 
         return resultText.replace(/^```json/, '').replace(/```$/, '')
 
+    }
+
+    getHash(inputString) {
+        const hash = crypto.createHash('sha1');
+
+        hash.update(inputString.toString(), 'utf8');
+
+        return hash.digest('hex');
+    }
+
+
+    async textToSpeech(text) {
+        const s3Client = new S3Client({
+            region: AWS_S3_REGION,
+        });
+
+        const eleven = new ElevenLabsClient({
+            apiKey: ELEVEN_LABS_API_KEY
+        });
+
+        const voiceId = 'Xb7hH8MSUJpSbSDYk0k2';
+
+        const audio = await eleven.textToSpeech.convert(voiceId, {
+            text: text,
+            modelId: 'eleven_multilingual_v2',
+            outputFormat: 'mp3_44100_128'
+        });
+
+        const chunks = [];
+        for await (const chunk of audio) chunks.push(chunk);
+        const audioBuf = Buffer.concat(chunks);
+
+        const name = this.getHash(Date.now());
+
+        const uploadParams = {
+            Bucket:  AWS_S3_BUCKETNAME,
+            Key:    `tts/identifier/${name}.mp3`,
+            Body:   audioBuf,
+            ContentType: 'audio/mpeg',
+            ContentLength: audioBuf.length
+        };
+
+        await s3Client.send(new PutObjectCommand(uploadParams));
+
+
+        return await getSignedUrl(
+            s3Client,
+            new GetObjectCommand({
+                Bucket: AWS_S3_BUCKETNAME,
+                Key:    `tts/identifier/${name}.mp3`
+            }),
+            { expiresIn: 60 * 60 * 24 * 7 }      // 7 days
+        );
     }
 }

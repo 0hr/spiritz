@@ -16,3 +16,4 @@ export const MODEL_INFORMATION = process.env.MODEL_INFORMATION;
 export const FIREBASE_DATABASE_ID = process.env.FIREBASE_DATABASE_ID;
 export const FIREBASE_COLLECTION = process.env.FIREBASE_COLLECTION;
 export const VERTEX_API_PROJECT_ID = process.env.VERTEX_API_PROJECT_ID;
+export const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;

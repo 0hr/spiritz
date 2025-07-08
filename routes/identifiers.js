@@ -158,7 +158,12 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
             response.status.code = 400;
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
+
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -191,6 +196,10 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -230,6 +239,10 @@ identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHa
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
