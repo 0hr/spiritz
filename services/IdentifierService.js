@@ -13,6 +13,7 @@ import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import s3Client from "../utils/s3Client.js";
 
 export class IdentifierService {
 
@@ -35,9 +36,7 @@ export class IdentifierService {
             }
         });
 
-        this.s3Client = new S3Client({
-            region: AWS_S3_REGION,
-        });
+        this.s3Client = s3Client
 
         const db = FIREBASE_DATABASE_ID !== "" ? getFirestore(FIREBASE_DATABASE_ID) : getFirestore();
         this.collection = db.collection(FIREBASE_COLLECTION);
@@ -310,11 +309,11 @@ OUTPUT FORMAT (strict)
         const generativeModel = this.vertexAI.getGenerativeModel({
             model: MODEL,
             generationConfig: {
-                temperature: 0,
+                temperature: 0.2,
                 responseMimeType: 'application/json',
                 candidateCount: 1,
-                topP: 0.5,
-                topK: 20,
+                topP: 0.2,
+                topK: 40,
                 frequencyPenalty: 0.0,
             }
         });
@@ -490,11 +489,10 @@ Respond with raw JSON only — no prose.`
 
 
     async textToSpeech(text) {
-
         // const eleven = new ElevenLabsClient({
         //     apiKey: ELEVEN_LABS_API_KEY
         // });
-
+        //
         // const voiceId = 'Xb7hH8MSUJpSbSDYk0k2';
         //
         // const audio = await eleven.textToSpeech.convert(voiceId, {
@@ -507,7 +505,7 @@ Respond with raw JSON only — no prose.`
             model: "gpt-4o-mini-tts",
             voice: "coral",
             input: text,
-            instructions: "Use a warm, reassuring voice that sounds like an experienced veterinarian giving friendly, practical advice to a pet owner. Speak clearly and at a calm, steady pace. Keep sentences short and conversational, emphasize key tips, and finish each point with an encouraging tone.",
+            instructions: "Speak in a cheerful and positive tone.",
         });
 
         // const chunks = [];
@@ -518,26 +516,25 @@ Respond with raw JSON only — no prose.`
 
         const name = this.getHash(Date.now());
 
+        const key = `tts/identifier/${name}.mp3`
         const uploadParams = {
             Bucket:  AWS_S3_BUCKETNAME,
-            Key:    `tts/identifier/${name}.mp3`,
+            Key:   key ,
             Body:   audioBuf,
             ContentType: 'audio/mpeg',
             ContentLength: audioBuf.length
         };
 
-        await this.s3Client.send(new PutObjectCommand(uploadParams));
-
-
-        return await getSignedUrl(
+        const signedUrl = getSignedUrl(
             this.s3Client,
             new GetObjectCommand({
                 Bucket: AWS_S3_BUCKETNAME,
-                Key:    `tts/identifier/${name}.mp3`
+                Key:    key
             }),
-            { expiresIn: 60 * 60 * 24 * 7 }      // 7 days
+            { expiresIn: 60 * 60 * 24 * 7 }
         );
+        await this.s3Client.send(new PutObjectCommand(uploadParams));
 
-        return null;
+        return await signedUrl
     }
 }

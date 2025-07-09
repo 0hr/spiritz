@@ -15,6 +15,7 @@
     "@google/genai": "^1.5.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@pixelbin/admin": "^3.8.2",
+    "@smithy/node-http-handler": "^4.0.6",
     "axios": "^1.8.4",
     "cookie-parser": "~1.4.4",
     "debug": "~4.3.4",
@@ -30,7 +31,6 @@
     "image-type": "^5.2.0",
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
-    "openai": "^4.93.0",
-    "wav": "^1.0.2"
+    "openai": "^4.93.0"
   }
 }
