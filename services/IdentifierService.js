@@ -35,6 +35,10 @@ export class IdentifierService {
             }
         });
 
+        this.s3Client = new S3Client({
+            region: AWS_S3_REGION,
+        });
+
         const db = FIREBASE_DATABASE_ID !== "" ? getFirestore(FIREBASE_DATABASE_ID) : getFirestore();
         this.collection = db.collection(FIREBASE_COLLECTION);
     }
@@ -302,29 +306,37 @@ OUTPUT FORMAT (strict)
 
     async analyzeSound(file, value, lang) {
 
-        const MODEL = 'gemini-2.5-pro';
+        const MODEL = `gemini-2.5-pro`;
         const generativeModel = this.vertexAI.getGenerativeModel({
             model: MODEL,
+            generationConfig: {
+                temperature: 0,
+                responseMimeType: 'application/json',
+                candidateCount: 1,
+                topP: 0.5,
+                topK: 20,
+                frequencyPenalty: 0.0,
+            }
         });
 
         const prompt = `You are a ${value} sound analyst and experienced veterinary behaviorist, animal-communication trainer specialized in ${value} and ${value}-vocalization analyst
 Your primary function is to meticulously analyze audio recordings of ${value}. Pay extremely close attention to subtle auditory details, as the input sound levels may be very low or contain faint vocalizations.
 Give a concise but information-rich JSON report with these keys:
 
-1. "species" — ${value}
+1. "species" — detect the species based on audio (cat, dog, bird etc)
 2. "emotion" - best guess (alert, excited, fearful, playful, anxious, etc.).
 3. "possible_triggers" - list 1-3 plausible causes for that emotion.
 4. "message" - one sentence message from the ${value}
 5. "confidence" - 0-100% percentage score reflecting overall certainty.
 6. "overall_advice" - overall advice about the sound, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
-7. "speak" - friendly human-like speech advice about possible triggers and overall advice
+7. "speak" - friendly human-like speech advice about possible triggers and overall advice (max 2 sentences, short information)
 8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
 *Crucial Rule*: If the audio contains an animal vocalization that is not from a ${value}, or if it's not an animal at all, return a JSON object with "status": false.
-1. If it is a different animal, the "message" must state, "It's not a ${value}. It's a [species name]." (e.g., "It's not a cat. It's a <dog/cat>.") (translate into ${lang} language or ${lang} language code.)
+1. *So important RULE* If it is a different animal than ${value}, the "message" must state, "It's not a ${value}. It's a [species name]." (e.g., "It's not a cat. It's a <dog/cat>.") (translate into ${lang} language or ${lang} language code.)
 2. If it's not an animal sound, the "message" should reflect that (e.g., "It's not a ${value}. It seems to be a human voice."). (translate into ${lang} language or ${lang} language code.)
-1. Every JSON value must translate into ${lang} language or ${lang} language code.
+3. Every JSON value must translate into ${lang} language or ${lang} language code.
 Respond with raw JSON only — no prose.`
 
         const request = {
@@ -338,10 +350,7 @@ Respond with raw JSON only — no prose.`
 
         const response = await generativeModel.generateContent(request);
 
-        const resultText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        return resultText.replace(/^```json/, '').replace(/```$/, '')
-
+        return response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
     }
 
     async analyzeVideo(file, lang) {
@@ -372,7 +381,7 @@ Tasks:
 7. "message" - one sentence message from the animal
 8. "confidence" - 0-100% percentage score reflecting overall certainty.
 9. "overall_advice" - overall advice about the sound, not just the emotion and provide additional information like how should a animal displaying this emotion be treated? concise guidance on how to respond to the its state. Explain in details
-10. "speak" - friendly human-like speech advice about possible triggers and overall advice
+10. "speak" - friendly human-like speech advice about possible triggers and overall advice (max 2 sentences, short information)
 11. "status" return true
 
 Return valid JSON:
@@ -444,7 +453,7 @@ Give a concise but information-rich JSON report with these keys:
 4. "message" - one sentence message from the ${value}
 5. "confidence" - 0-100% percentage score reflecting overall certainty.
 6. "overall_advice" - overall advice about the image, not just the emotion and provide additional information like how should a ${value} displaying this emotion be treated? concise guidance on how to respond to the ${value}'s state
-7. "speak" - friendly human-like speech advice about possible triggers and overall advice
+7. "speak" - friendly human-like speech advice about possible triggers and overall advice (max 2 sentences, short information)
 8. "status" return true
 
 If the clip is too short or noisy, return "status": false and explain why in "message" instead of guessing.
@@ -481,25 +490,31 @@ Respond with raw JSON only — no prose.`
 
 
     async textToSpeech(text) {
-        const s3Client = new S3Client({
-            region: AWS_S3_REGION,
+
+        // const eleven = new ElevenLabsClient({
+        //     apiKey: ELEVEN_LABS_API_KEY
+        // });
+
+        // const voiceId = 'Xb7hH8MSUJpSbSDYk0k2';
+        //
+        // const audio = await eleven.textToSpeech.convert(voiceId, {
+        //     text: text,
+        //     modelId: 'eleven_multilingual_v2',
+        //     outputFormat: 'mp3_44100_128'
+        // });
+
+        const mp3 = await this.openai.audio.speech.create({
+            model: "gpt-4o-mini-tts",
+            voice: "coral",
+            input: text,
+            instructions: "Use a warm, reassuring voice that sounds like an experienced veterinarian giving friendly, practical advice to a pet owner. Speak clearly and at a calm, steady pace. Keep sentences short and conversational, emphasize key tips, and finish each point with an encouraging tone.",
         });
 
-        const eleven = new ElevenLabsClient({
-            apiKey: ELEVEN_LABS_API_KEY
-        });
+        // const chunks = [];
+        // for await (const chunk of audio) chunks.push(chunk);
+        // const audioBuf = Buffer.concat(chunks);
 
-        const voiceId = 'Xb7hH8MSUJpSbSDYk0k2';
-
-        const audio = await eleven.textToSpeech.convert(voiceId, {
-            text: text,
-            modelId: 'eleven_multilingual_v2',
-            outputFormat: 'mp3_44100_128'
-        });
-
-        const chunks = [];
-        for await (const chunk of audio) chunks.push(chunk);
-        const audioBuf = Buffer.concat(chunks);
+        const audioBuf = Buffer.from(await mp3.arrayBuffer());
 
         const name = this.getHash(Date.now());
 
@@ -511,16 +526,18 @@ Respond with raw JSON only — no prose.`
             ContentLength: audioBuf.length
         };
 
-        await s3Client.send(new PutObjectCommand(uploadParams));
+        await this.s3Client.send(new PutObjectCommand(uploadParams));
 
 
         return await getSignedUrl(
-            s3Client,
+            this.s3Client,
             new GetObjectCommand({
                 Bucket: AWS_S3_BUCKETNAME,
                 Key:    `tts/identifier/${name}.mp3`
             }),
             { expiresIn: 60 * 60 * 24 * 7 }      // 7 days
         );
+
+        return null;
     }
 }

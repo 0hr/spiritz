@@ -11,35 +11,35 @@
 // const mp3 = await openai.audio.speech.create({
 //     model: "gpt-4o-mini-tts",
 //     voice: "coral",
-//     input: "Merhaba! Bu minik dostumuz oldukça endişeli ve korkmuş görünüyor. Belki yalnız kaldığı için, belki de duyduğu bir sesten veya bir şeyden korktuğu için böyle sesler çıkarıyor olabilir. En iyisi ona sakince yaklaşıp güvende olduğunu hissettirmek ve etrafta onu neyin korkuttuğunu bulmaya çalışmak. Eğer bir yeri acımıyorsa ve bu durum sık sık tekrar ediyorsa, bir uzmandan destek almak en doğrusu olacaktır.",
+//     input: "Köpeğiniz ayrılık kaygısı yaşıyor veya bir şeye ulaşamadığı için çok gergin olabilir. Sakin kalmasına yardımcı olun ve bu davranışı tetikleyen durumlar üzerinde çalışın.",
 //     instructions: "Use a warm, reassuring voice that sounds like an experienced veterinarian giving friendly, practical advice to a pet owner. Speak clearly and at a calm, steady pace. Keep sentences short and conversational, emphasize key tips, and finish each point with an encouraging tone.",
 // });
 //
 // const buffer = Buffer.from(await mp3.arrayBuffer());
 // await fs.promises.writeFile(speechFile, buffer);
+//
 
 
+import {VERTEX_API_PROJECT_ID} from "./consts.js";
+import {VertexAI} from "@google-cloud/vertexai";
 
+const PROJECT_ID = VERTEX_API_PROJECT_ID;
 
+// const LOCATION = 'us-central1';
 
+const KEY_PATH = './vertexServiceAccountKey.json';
 
+this.vertexAI = new VertexAI({
+    project: PROJECT_ID,
+    // location: LOCATION,
+    googleAuthOptions: {
+        keyFilename: KEY_PATH
+    }
+});
 
+const MODEL = 'gemini-2.5-pro';
+const generativeModel = this.vertexAI.getGenerativeModel({
+    model: MODEL,
+});
 
-
-
-
-
-// fs.writeFileSync('speech.mp3', audioBuf);
-
-const name = calculateMD5Hash(Date.now());
-const uploadParams = {
-    Bucket:  AWS_S3_BUCKETNAME,
-    Key:    `tts/identifier/${name}.mp3`,
-    Body:   audioBuf,
-    ContentType: 'audio/mpeg',
-    ContentLength: audioBuf.length
-};
-
-
-
-console.log('🔗  URL (valid 24 h):', signedUrl);
+const response = await generativeModel.generateContent(request);

@@ -6,6 +6,7 @@ import IdentifierResultResponse from "../responses/IdentifierResultResponse.js";
 import {Upload, UploadSound, UploadVideo} from "../middlewares/Upload.js";
 import {ErrorHandle} from "../middlewares/HandleError.js";
 import {HasSecurity} from "../middlewares/HasSecurity.js";
+import { performance } from 'node:perf_hooks';
 
 const identifierRouter = express.Router();
 
@@ -145,7 +146,7 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
             data: req.file.buffer.toString('base64'),
             mimeType: req.file.mimetype,
         };
-
+        const start = performance.now();
         const identifierService = new IdentifierService();
         const result_str = await identifierService.analyzeSound(fileBase64, value, lang)
         const result = JSON.parse(result_str)
@@ -160,10 +161,11 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
         }
 
         response.result = result;
-
+        response.result.perf_model = performance.now() - start
         if (result.hasOwnProperty('speak')) {
             response.result.mp3 = await identifierService.textToSpeech(result.speak)
         }
+        response.result.perf = performance.now() - start
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
