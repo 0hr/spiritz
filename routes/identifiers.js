@@ -46,7 +46,7 @@ identifierRouter.post('/identify', [Upload.single('image'), ErrorHandle, HasSecu
             response.status.code = 400;
             response.status.message = result.answer[0];
         }
-        response.result = result;
+        response.result = result.answer;
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -134,6 +134,12 @@ identifierRouter.post('/analyze-image',  [Upload.single('image'), ErrorHandle, H
 identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
         const lang = req.body.lang || "english";
         const fileBase64 = {
             data: req.file.buffer.toString('base64'),
@@ -141,7 +147,7 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
         };
 
         const identifierService = new IdentifierService();
-        const result_str = await identifierService.analyzeSound(fileBase64, lang)
+        const result_str = await identifierService.analyzeSound(fileBase64, value, lang)
         const result = JSON.parse(result_str)
 
         if (!result.hasOwnProperty('status')) {
@@ -153,6 +159,11 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
+
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -185,6 +196,11 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
+
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
@@ -197,6 +213,12 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
 identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (!req.body.value) {
+            response.status.code = 500;
+            response.status.message = 'Value is required';
+            return res.json(response);
+        }
+        const value = req.body.value;
         const type = await imageType(req.file.buffer);
         const lang = req.body.lang || "english";
         const fileBase64 = {
@@ -206,7 +228,7 @@ identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHa
 
         const identifierService = new IdentifierService();
 
-        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, lang))
+        const result = JSON.parse(await identifierService.analyzeAnimalImage(fileBase64, value, lang))
 
         if (!result.hasOwnProperty('status')) {
             throw new Error("Bad Response!")
@@ -218,6 +240,10 @@ identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHa
             response.status.message = result.hasOwnProperty('message') ? result.message : "Bad Response!";
         }
         response.result = result;
+
+        if (result.hasOwnProperty('speak')) {
+            response.result.mp3 = await identifierService.textToSpeech(result.speak)
+        }
     } catch (err) {
         res.status(500);
         response.status.message = err.message;
