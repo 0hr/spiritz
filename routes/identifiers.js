@@ -31,6 +31,10 @@ identifierRouter.post('/identify', [Upload.single('image'), ErrorHandle, HasSecu
             response.status.message = 'Id is required';
             return res.json(response);
         }
+
+        if (req.file === undefined || req.file === null) {
+            throw new Error("File is required")
+        }
         const id = req.body.id;
         const lang = req.body.lang || "english";
         const identifierService = new IdentifierService();
@@ -105,6 +109,9 @@ identifierRouter.post('/ask',  [Upload.single('image'), ErrorHandle, HasSecurity
 identifierRouter.post('/analyze-image',  [Upload.single('image'), ErrorHandle, HasSecurity],async (req, res) => {
     const response = new IdentifierResultResponse();
     try {
+        if (req.file === undefined || req.file === null) {
+            throw new Error("File is required")
+        }
         const lang = req.body.lang || "english";
         const type = await imageType(req.file.buffer);
         const imageBase64 = `data:${type.mime};base64,${req.file.buffer.toString('base64')}`;
@@ -138,6 +145,9 @@ identifierRouter.post('/analyze-sound',  [UploadSound.single('file'), ErrorHandl
             response.status.code = 500;
             response.status.message = 'Value is required';
             return res.json(response);
+        }
+        if (req.file === undefined || req.file === null) {
+            throw new Error("File is required")
         }
         const value = req.body.value;
         const lang = req.body.lang || "english";
@@ -177,6 +187,9 @@ identifierRouter.post('/analyze-video',  [UploadVideo.single('file'), ErrorHandl
     const response = new IdentifierResultResponse();
     try {
         const lang = req.body.lang || "english";
+        if (req.file === undefined || req.file === null) {
+            throw new Error("File is required")
+        }
         const fileBase64 = {
             data: req.file.buffer.toString('base64'),
             mimeType: req.file.mimetype,
@@ -217,6 +230,10 @@ identifierRouter.post('/analyze-animal-image',  [Upload.single('image'), ErrorHa
             response.status.code = 500;
             response.status.message = 'Value is required';
             return res.json(response);
+        }
+
+        if (req.file === undefined || req.file === null) {
+            throw new Error("File is required")
         }
         const value = req.body.value;
         const type = await imageType(req.file.buffer);
